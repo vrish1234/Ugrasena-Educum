@@ -1,0 +1,68 @@
+{
+  "entities": {
+    "Setting": {
+      "title": "Setting",
+      "description": "A configuration setting for the application",
+      "type": "object",
+      "properties": {
+        "key": { "type": "string" },
+        "value": { "type": "string" }
+      },
+      "required": ["key", "value"]
+    },
+    "Registration": {
+      "title": "Registration",
+      "description": "A student registration",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "class": { "type": "string" },
+        "school": { "type": "string" },
+        "mobile": { "type": "string" },
+        "created_at": { "type": "string", "format": "date-time" }
+      },
+      "required": ["name", "class", "school", "mobile", "created_at"]
+    },
+    "Notification": {
+      "title": "Notification",
+      "description": "A notice board notification",
+      "type": "object",
+      "properties": {
+        "message": { "type": "string" },
+        "created_at": { "type": "string", "format": "date-time" }
+      },
+      "required": ["message", "created_at"]
+    },
+    "Post": {
+      "title": "Post",
+      "description": "A gallery post or image",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string" },
+        "description": { "type": "string" },
+        "image_url": { "type": "string" },
+        "type": { "type": "string" },
+        "created_at": { "type": "string", "format": "date-time" }
+      },
+      "required": ["title", "description", "image_url", "type", "created_at"]
+    }
+  },
+  "firestore": {
+    "settings": {
+      "schema": { "$ref": "#/entities/Setting" },
+      "description": "Global settings"
+    },
+    "registrations": {
+      "schema": { "$ref": "#/entities/Registration" },
+      "description": "Student registrations"
+    },
+    "notifications": {
+      "schema": { "$ref": "#/entities/Notification" },
+      "description": "Notifications"
+    },
+    "posts": {
+      "schema": { "$ref": "#/entities/Post" },
+      "description": "Gallery posts"
+    }
+  }
+}

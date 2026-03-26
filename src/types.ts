@@ -4,7 +4,15 @@ export interface Post {
   description: string;
   image_url?: string;
   video_link?: string;
-  type?: 'film' | 'image' | 'video';
+  created_at: string;
+  likes_count?: number;
+}
+
+export interface Comment {
+  id: string;
+  post_id: string;
+  user_name: string;
+  content: string;
   created_at: string;
 }
 
@@ -15,9 +23,9 @@ export interface Notification {
 }
 
 export interface CompanySettings {
-  phone: string;
-  email: string;
-  address: string;
+  contact_number: string;
+  email_address: string;
+  office_address: string;
   notice_board: string;
   logo_url?: string;
 }
