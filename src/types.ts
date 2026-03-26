@@ -27,5 +27,6 @@ export interface CompanySettings {
   email_address: string;
   office_address: string;
   notice_board: string;
+  about_us?: string;
   logo_url?: string;
 }

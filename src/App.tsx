@@ -30,10 +30,34 @@ function Layout({ children }: { children: React.ReactNode }) {
       }
     }
     fetchSettings();
+
+    // Add real-time subscription for settings
+    const channel = supabase?.channel('public_company_info_changes')
+      .on('postgres_changes', { 
+        event: 'UPDATE', 
+        schema: 'public', 
+        table: 'company_info', 
+        filter: 'id=eq.1' 
+      }, (payload: any) => {
+        setSettings(prev => ({ ...prev, ...payload.new }));
+      })
+      .subscribe();
+
+    return () => {
+      supabase?.removeChannel(channel);
+    };
   }, []);
 
   return (
     <div className="min-h-screen flex flex-col relative bg-white">
+      {/* Notice Board Bar */}
+      {settings.notice_board && (
+        <div className="bg-gold-500 text-navy-900 py-2 px-4 overflow-hidden whitespace-nowrap z-[60]">
+          <div className="animate-marquee inline-block font-bold">
+            {settings.notice_board}
+          </div>
+        </div>
+      )}
       {/* Watermark */}
       <div className="fixed inset-0 pointer-events-none opacity-[0.015] flex flex-wrap justify-center items-center overflow-hidden">
         {[...Array(20)].map((_, i) => (
@@ -108,7 +132,7 @@ function ContactPage() {
   useEffect(() => {
     async function fetchCompanyInfo() {
       if (!supabase) return;
-      const { data, error } = await supabase.from('company_info').select('*').eq('id', 1).single();
+      const { data } = await supabase.from('company_info').select('*').eq('id', 1).single();
       if (data) {
         setInfo({
           contact_number: data.contact_number || '',
@@ -118,6 +142,26 @@ function ContactPage() {
       }
     }
     fetchCompanyInfo();
+
+    // Add real-time subscription
+    const channel = supabase?.channel('public_contact_info_changes')
+      .on('postgres_changes', { 
+        event: 'UPDATE', 
+        schema: 'public', 
+        table: 'company_info', 
+        filter: 'id=eq.1' 
+      }, (payload: any) => {
+        setInfo({
+          contact_number: payload.new.contact_number || '',
+          email_address: payload.new.email_address || '',
+          office_address: payload.new.office_address || ''
+        });
+      })
+      .subscribe();
+
+    return () => {
+      supabase?.removeChannel(channel);
+    };
   }, []);
 
   return (
@@ -179,6 +223,17 @@ function NoticePage() {
       if (data) setNotifications(data);
     }
     fetchNotifications();
+
+    // Add real-time subscription
+    const channel = supabase?.channel('public_all_notifications_changes')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'notifications' }, () => {
+        fetchNotifications();
+      })
+      .subscribe();
+
+    return () => {
+      supabase?.removeChannel(channel);
+    };
   }, []);
 
   return (
@@ -203,21 +258,58 @@ function NoticePage() {
 }
 
 function AboutPage() {
+  const [aboutContent, setAboutContent] = useState<string | null>(null);
+
+  useEffect(() => {
+    async function fetchAbout() {
+      if (!supabase) return;
+      const { data } = await supabase.from('company_info').select('about_us').eq('id', 1).single();
+      if (data?.about_us) {
+        setAboutContent(data.about_us);
+      }
+    }
+    fetchAbout();
+
+    // Add real-time subscription
+    const channel = supabase?.channel('public_about_us_changes')
+      .on('postgres_changes', { 
+        event: 'UPDATE', 
+        schema: 'public', 
+        table: 'company_info', 
+        filter: 'id=eq.1' 
+      }, (payload: any) => {
+        if (payload.new.about_us) setAboutContent(payload.new.about_us);
+      })
+      .subscribe();
+
+    return () => {
+      supabase?.removeChannel(channel);
+    };
+  }, []);
+
   return (
     <section className="max-w-6xl mx-auto py-16 px-4">
       <h2 className="text-4xl font-bold text-navy-900 mb-12 text-center">About Us</h2>
       <div className="grid md:grid-cols-2 gap-12">
         <div className="bg-white p-8 rounded-2xl shadow-md border border-gold-200">
           <h3 className="text-2xl font-bold text-navy-900 mb-4">Our Vision & Mission</h3>
-          <p className="text-gray-700 leading-relaxed mb-4">
-            Under the visionary leadership of our CEO <strong>Mr. Himanshu Kumar</strong>, Ugrasena Educum is an education-based organization dedicated to empowering students from Class 5th to 10th. 
-            We believe every student deserves a fair chance to succeed. We bridge the gap in quality education by providing 
-            scholarships, free online coaching, affordable offline coaching, sports support, and career guidance, 
-            ensuring holistic development and a brighter future for all.
-          </p>
-          <p className="text-gray-700 leading-relaxed">
-            Our dedicated team, including <strong>Mr. Dipak Patel</strong> (Marketing Head) and <strong>Mr. Vrishketu Ray</strong> (IT & Management Head), works tirelessly to ensure that talent is recognized and nurtured, regardless of financial barriers.
-          </p>
+          {aboutContent ? (
+            <div className="text-gray-700 leading-relaxed whitespace-pre-wrap">
+              {aboutContent}
+            </div>
+          ) : (
+            <>
+              <p className="text-gray-700 leading-relaxed mb-4">
+                Under the visionary leadership of our CEO <strong>Mr. Himanshu Kumar</strong>, Ugrasena Educum is an education-based organization dedicated to empowering students from Class 5th to 10th. 
+                We believe every student deserves a fair chance to succeed. We bridge the gap in quality education by providing 
+                scholarships, free online coaching, affordable offline coaching, sports support, and career guidance, 
+                ensuring holistic development and a brighter future for all.
+              </p>
+              <p className="text-gray-700 leading-relaxed">
+                Our dedicated team, including <strong>Mr. Dipak Patel</strong> (Marketing Head) and <strong>Mr. Vrishketu Ray</strong> (IT & Management Head), works tirelessly to ensure that talent is recognized and nurtured, regardless of financial barriers.
+              </p>
+            </>
+          )}
         </div>
         <div className="space-y-6">
           <div className="bg-white p-6 rounded-2xl shadow-md border border-gold-200">
@@ -245,13 +337,39 @@ function HomePage() {
   useEffect(() => {
     async function fetchData() {
       if (!supabase) return;
-      const { data: notices } = await supabase.from('notifications').select('message').order('created_at', { ascending: false }).limit(1).single();
-      if (notices) setLatestNotice(notices.message);
+      
+      // Try fetching from company_info first for the sticky notice
+      const { data: companyData } = await supabase.from('company_info').select('notice_board').eq('id', 1).single();
+      if (companyData?.notice_board) {
+        setLatestNotice(companyData.notice_board);
+      } else {
+        // Fallback to latest notification
+        const { data: notices } = await supabase.from('notifications').select('message').order('created_at', { ascending: false }).limit(1).single();
+        if (notices) setLatestNotice(notices.message);
+      }
 
       const { data: postsData } = await supabase.from('posts').select('*').order('created_at', { ascending: false }).limit(3);
       if (postsData) setPosts(postsData);
     }
     fetchData();
+
+    // Add real-time subscriptions
+    const noticeChannel = supabase?.channel('public_notifications_changes')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'notifications' }, () => {
+        fetchData();
+      })
+      .subscribe();
+
+    const postsChannel = supabase?.channel('public_posts_changes')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'posts' }, () => {
+        fetchData();
+      })
+      .subscribe();
+
+    return () => {
+      supabase?.removeChannel(noticeChannel);
+      supabase?.removeChannel(postsChannel);
+    };
   }, []);
 
   return (
@@ -494,11 +612,6 @@ function AdminPanel() {
   const [selectedNotifications, setSelectedNotifications] = useState<string[]>([]);
   const [selectedRegistrations, setSelectedRegistrations] = useState<string[]>([]);
 
-  const [loginEmail, setLoginEmail] = useState('');
-  const [loginPassword, setLoginPassword] = useState('');
-  const [loginError, setLoginError] = useState('');
-  const [isLoggingIn, setIsLoggingIn] = useState(false);
-
   useEffect(() => {
     async function checkUser() {
       if (!supabase) {
@@ -552,15 +665,21 @@ function AdminPanel() {
 
   const handleUpdateSettings = async (key: keyof CompanySettings, value: string) => {
     if (!supabase) return;
-    // Assuming company_info has a single row with id=1
-    const { error } = await supabase.from('company_info').upsert({ id: 1, [key]: value });
+    // Use update instead of upsert to avoid overwriting other fields
+    const { error } = await supabase.from('company_info').update({ [key]: value }).eq('id', 1);
+    
+    // If update fails (e.g. row doesn't exist), try upsert as fallback
     if (error) {
-      alert(`Error updating ${key}`);
-    } else {
-      setSettings(prev => ({ ...prev, [key]: value }));
-      setSuccessMessage(`${key.replace('_', ' ')} updated successfully!`);
-      setTimeout(() => setSuccessMessage(null), 3000);
+      const { error: upsertError } = await supabase.from('company_info').upsert({ id: 1, [key]: value });
+      if (upsertError) {
+        alert(`Error updating ${key}`);
+        return;
+      }
     }
+    
+    setSettings(prev => ({ ...prev, [key]: value }));
+    setSuccessMessage(`${key.replace('_', ' ')} updated successfully!`);
+    setTimeout(() => setSuccessMessage(null), 3000);
   };
 
   const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -663,30 +782,7 @@ function AdminPanel() {
     }
   };
 
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!supabase) return;
-    
-    setIsLoggingIn(true);
-    setLoginError('');
-    
-    try {
-      const { error } = await supabase.auth.signInWithPassword({ 
-        email: loginEmail, 
-        password: loginPassword 
-      });
-      
-      if (error) {
-        setLoginError(error.message);
-      }
-    } catch (err: any) {
-      setLoginError('An unexpected error occurred. Please try again.');
-    } finally {
-      setIsLoggingIn(false);
-    }
-  };
-
-  if (loading) return <div className="flex justify-center items-center h-64">Loading...</div>;
+  if (loading) return <div className="flex justify-center items-center h-screen bg-gray-50 text-navy-900 font-bold">Loading Admin Panel...</div>;
 
   if (!supabase) {
     return (
@@ -697,12 +793,16 @@ function AdminPanel() {
     );
   }
 
+  if (!user) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
+        <Auth />
+      </div>
+    );
+  }
+
   return (
     <div className="flex min-h-screen bg-gray-50">
-      <Modal isOpen={!user} onClose={() => {}}>
-        <Auth />
-      </Modal>
-
       {/* Sidebar Navigation */}
       <aside className="w-64 bg-navy-900 text-white p-6 flex flex-col">
         <h2 className="text-2xl font-bold text-gold-500 mb-8 flex items-center gap-2">
@@ -861,6 +961,16 @@ function AdminPanel() {
                     <input type="text" className="flex-grow p-3 border rounded-lg" value={settings.office_address || ''} onChange={e => setSettings({...settings, office_address: e.target.value})} />
                     <button onClick={() => handleUpdateSettings('office_address', settings.office_address)} className="bg-navy-900 text-gold-500 px-4 py-2 rounded-lg font-bold">Save</button>
                   </div>
+                </div>
+                <div className="space-y-2 md:col-span-2">
+                  <label className="text-sm font-bold text-gray-600 flex items-center gap-2">About Us Content</label>
+                  <textarea className="w-full p-3 border rounded-lg h-32" value={settings.about_us || ''} onChange={e => setSettings({...settings, about_us: e.target.value})} />
+                  <button onClick={() => handleUpdateSettings('about_us', settings.about_us || '')} className="bg-navy-900 text-gold-500 px-8 py-2 rounded-lg font-bold mt-2">Save About Us</button>
+                </div>
+                <div className="space-y-2 md:col-span-2">
+                  <label className="text-sm font-bold text-gray-600 flex items-center gap-2">Notice Board Text</label>
+                  <textarea className="w-full p-3 border rounded-lg h-24" value={settings.notice_board || ''} onChange={e => setSettings({...settings, notice_board: e.target.value})} />
+                  <button onClick={() => handleUpdateSettings('notice_board', settings.notice_board || '')} className="bg-navy-900 text-gold-500 px-8 py-2 rounded-lg font-bold mt-2">Save Notice Board</button>
                 </div>
               </div>
             </div>
