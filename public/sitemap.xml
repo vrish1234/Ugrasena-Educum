@@ -1,31 +1,31 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
-    <loc>https://ugrasenaeducum.com/</loc>
+    <loc>https://ugrasena-educum.vercel.app/</loc>
     <lastmod>2026-03-27</lastmod>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
   </url>
   <url>
-    <loc>https://ugrasenaeducum.com/about</loc>
+    <loc>https://ugrasena-educum.vercel.app/about</loc>
     <lastmod>2026-03-27</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://ugrasenaeducum.com/notice</loc>
+    <loc>https://ugrasena-educum.vercel.app/notice</loc>
     <lastmod>2026-03-27</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://ugrasenaeducum.com/gallery</loc>
+    <loc>https://ugrasena-educum.vercel.app/gallery</loc>
     <lastmod>2026-03-27</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://ugrasenaeducum.com/contact</loc>
+    <loc>https://ugrasena-educum.vercel.app/contact</loc>
     <lastmod>2026-03-27</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
