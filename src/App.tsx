@@ -404,7 +404,8 @@ function HomePage() {
       <section className="relative h-[70vh] flex items-center justify-center text-center text-white bg-navy-900 rounded-3xl overflow-hidden shadow-2xl">
         <div className="absolute inset-0 bg-navy-900"></div>
         <div className="relative z-10 p-8 max-w-4xl">
-          <h1 className="text-6xl font-extrabold mb-6 tracking-tight">UGRASENA EDUCUM PRIVATE LIMITED</h1>
+          <h1 className="text-6xl font-extrabold mb-6 tracking-tight">Ugra Sena EDU</h1>
+          <h2 className="text-2xl font-semibold mb-6 text-gold-400 opacity-90 uppercase tracking-widest">UGRASENA EDUCUM PRIVATE LIMITED</h2>
           <p className="text-3xl font-light italic text-gold-500">"Empowering Minds, Shaping Futures"</p>
         </div>
       </section>
