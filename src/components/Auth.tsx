@@ -72,7 +72,7 @@ export function Auth() {
             <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
             <input 
               type="email" 
-              placeholder="admin@example.com" 
+              placeholder="Enter your email" 
               className="w-full pl-12 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-gold-500 focus:border-transparent outline-none transition-all" 
               value={email} 
               onChange={e => setEmail(e.target.value)} 

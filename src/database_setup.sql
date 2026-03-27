@@ -70,7 +70,15 @@ CREATE POLICY "Allow authenticated all access on notifications" ON notifications
 CREATE POLICY "Allow public insert on registrations" ON registrations FOR INSERT WITH CHECK (true);
 CREATE POLICY "Allow authenticated all access on registrations" ON registrations FOR ALL TO authenticated USING (true) WITH CHECK (true);
 
--- comments policies
-CREATE POLICY "Allow public read access on comments" ON comments FOR SELECT USING (true);
-CREATE POLICY "Allow public insert on comments" ON comments FOR INSERT WITH CHECK (true);
-CREATE POLICY "Allow authenticated all access on comments" ON comments FOR ALL TO authenticated USING (true) WITH CHECK (true);
+-- Create team table
+CREATE TABLE IF NOT EXISTS team (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  name TEXT NOT NULL,
+  role TEXT NOT NULL,
+  order_index INTEGER DEFAULT 0,
+  created_at TIMESTAMPTZ DEFAULT now()
+);
+
+-- team policies
+CREATE POLICY "Allow public read access on team" ON team FOR SELECT USING (true);
+CREATE POLICY "Allow authenticated all access on team" ON team FOR ALL TO authenticated USING (true) WITH CHECK (true);

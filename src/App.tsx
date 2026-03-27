@@ -8,26 +8,31 @@ import { BrowserRouter as Router, Routes, Route, Link, useNavigate } from 'react
 import { supabase } from './lib/supabase';
 import { Logo } from './components/Logo';
 import { Post, Notification, CompanySettings } from './types';
-import { Trash2, Edit, Plus, LogOut, Settings, Bell, Image, Phone, Mail, MapPin, Heart, MessageCircle } from 'lucide-react';
+import { Trash2, Edit, Plus, LogOut, Settings, Bell, Image, Phone, Mail, MapPin, Heart, MessageCircle, Users } from 'lucide-react';
 import { Auth } from './components/Auth';
 import { ImageUpload } from './components/ImageUpload';
 import { Modal } from './components/Modal';
 
 function Layout({ children }: { children: React.ReactNode }) {
   const [settings, setSettings] = useState<CompanySettings>({
-    contact_number: '+91 XXXXXXXXXX',
-    email_address: 'info@ugrasenaeducum.com',
-    office_address: 'Sasaram, Bihar',
-    notice_board: 'SCHOLARSHIP 2026: Registration open for Classes 5th-10th. Application Fee: ₹399.'
+    contact_number: '',
+    email_address: '',
+    office_address: '',
+    notice_board: ''
   });
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function fetchSettings() {
-      if (!supabase) return;
+      if (!supabase) {
+        setLoading(false);
+        return;
+      }
       const { data } = await supabase.from('company_info').select('*').eq('id', 1).single();
       if (data) {
         setSettings(prev => ({ ...prev, ...data }));
       }
+      setLoading(false);
     }
     fetchSettings();
 
@@ -48,6 +53,17 @@ function Layout({ children }: { children: React.ReactNode }) {
     };
   }, []);
 
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-navy-900 text-gold-500">
+        <div className="flex flex-col items-center gap-4">
+          <div className="w-12 h-12 border-4 border-gold-500 border-t-transparent rounded-full animate-spin"></div>
+          <p className="font-bold animate-pulse">Loading Ugrasena Educum...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen flex flex-col relative bg-white">
       {/* Notice Board Bar */}
@@ -60,8 +76,8 @@ function Layout({ children }: { children: React.ReactNode }) {
       )}
       {/* Watermark */}
       <div className="fixed inset-0 pointer-events-none opacity-[0.015] flex flex-wrap justify-center items-center overflow-hidden">
-        {[...Array(20)].map((_, i) => (
-          <img key={i} src="https://raw.githubusercontent.com/vrishketuray0/ugrasena-educum/main/logo.png" alt="Watermark" className="w-64 h-64 m-8" referrerPolicy="no-referrer" />
+        {settings.logo_url && [...Array(20)].map((_, i) => (
+          <img key={i} src={settings.logo_url} alt="Watermark" className="w-64 h-64 m-8" referrerPolicy="no-referrer" />
         ))}
       </div>
       <header className="bg-navy-900 text-gold-500 p-4 flex flex-col md:flex-row justify-between items-center sticky top-0 z-50 shadow-md gap-4">
@@ -128,6 +144,7 @@ function RegistrationPage() {
 
 function ContactPage() {
   const [info, setInfo] = useState({ contact_number: '', email_address: '', office_address: '' });
+  const [team, setTeam] = useState<{ name: string, role: string }[]>([]);
 
   useEffect(() => {
     async function fetchCompanyInfo() {
@@ -141,7 +158,13 @@ function ContactPage() {
         });
       }
     }
+    async function fetchTeam() {
+      if (!supabase) return;
+      const { data } = await supabase.from('team').select('name, role').order('order_index', { ascending: true });
+      if (data) setTeam(data);
+    }
     fetchCompanyInfo();
+    fetchTeam();
 
     // Add real-time subscription
     const channel = supabase?.channel('public_contact_info_changes')
@@ -172,42 +195,55 @@ function ContactPage() {
         <div className="bg-white p-8 rounded-2xl shadow-md border border-gold-200 flex flex-col">
           <h3 className="text-2xl font-bold text-navy-900 mb-6">Get In Touch</h3>
           <div className="space-y-4 flex-grow">
-            <div className="flex items-center gap-3 text-gray-700">
-              <Phone className="text-gold-500 shrink-0" size={20} />
-              <span>{info.contact_number || '+91 XXXXXXXXXX'}</span>
-            </div>
-            <div className="flex items-center gap-3 text-gray-700">
-              <Mail className="text-gold-500 shrink-0" size={20} />
-              <span>{info.email_address || 'info@ugrasenaeducum.com'}</span>
-            </div>
-            <div className="flex items-center gap-3 text-gray-700">
-              <MapPin className="text-gold-500 shrink-0" size={20} />
-              <span>{info.office_address || 'Sasaram, Bihar'}</span>
-            </div>
+            {info.contact_number && (
+              <div className="flex items-center gap-3 text-gray-700">
+                <Phone className="text-gold-500 shrink-0" size={20} />
+                <span>{info.contact_number}</span>
+              </div>
+            )}
+            {info.email_address && (
+              <div className="flex items-center gap-3 text-gray-700">
+                <Mail className="text-gold-500 shrink-0" size={20} />
+                <span>{info.email_address}</span>
+              </div>
+            )}
+            {info.office_address && (
+              <div className="flex items-center gap-3 text-gray-700">
+                <MapPin className="text-gold-500 shrink-0" size={20} />
+                <span>{info.office_address}</span>
+              </div>
+            )}
+            {!info.contact_number && !info.email_address && !info.office_address && (
+              <p className="text-gray-500 italic">Contact information not available.</p>
+            )}
           </div>
         </div>
 
         <div className="bg-white p-8 rounded-2xl shadow-md border border-gold-200">
           <h3 className="text-2xl font-bold text-navy-900 mb-4">Our Location</h3>
-          <p className="text-gray-700 leading-relaxed">
-            Registered Office: {info.office_address || 'Sasaram, Bihar'}<br />
-            CIN: U85500BR2026PTC083704
-          </p>
+          {info.office_address ? (
+            <p className="text-gray-700 leading-relaxed">
+              Registered Office: {info.office_address}<br />
+              CIN: U85500BR2026PTC083704
+            </p>
+          ) : (
+            <p className="text-gray-500 italic">Address not available.</p>
+          )}
         </div>
       </div>
 
       <h3 className="text-3xl font-bold text-navy-900 mb-8 text-center">Meet Our Leadership</h3>
       <div className="grid md:grid-cols-3 gap-8">
-        {[
-          { name: 'Mr. Himanshu Kumar', role: 'CEO & Finance Department Head' },
-          { name: 'Mr. Dipak Patel', role: 'Marketing Department Head' },
-          { name: 'Mr. Vrishketu Ray', role: 'IT Cell & Management Department Head' }
-        ].map((member, i) => (
-          <div key={i} className="bg-white p-8 rounded-2xl shadow-lg border-t-4 border-gold-500 text-center">
-            <h4 className="text-xl font-bold text-navy-900 mb-2">{member.name}</h4>
-            <p className="text-gold-600 font-medium">{member.role}</p>
-          </div>
-        ))}
+        {team.length > 0 ? (
+          team.map((member, i) => (
+            <div key={i} className="bg-white p-8 rounded-2xl shadow-lg border-t-4 border-gold-500 text-center">
+              <h4 className="text-xl font-bold text-navy-900 mb-2">{member.name}</h4>
+              <p className="text-gold-600 font-medium">{member.role}</p>
+            </div>
+          ))
+        ) : (
+          <p className="text-center text-gray-500 italic col-span-3">Leadership team information not available.</p>
+        )}
       </div>
     </div>
   );
@@ -298,17 +334,7 @@ function AboutPage() {
               {aboutContent}
             </div>
           ) : (
-            <>
-              <p className="text-gray-700 leading-relaxed mb-4">
-                Under the visionary leadership of our CEO <strong>Mr. Himanshu Kumar</strong>, Ugrasena Educum is an education-based organization dedicated to empowering students from Class 5th to 10th. 
-                We believe every student deserves a fair chance to succeed. We bridge the gap in quality education by providing 
-                scholarships, free online coaching, affordable offline coaching, sports support, and career guidance, 
-                ensuring holistic development and a brighter future for all.
-              </p>
-              <p className="text-gray-700 leading-relaxed">
-                Our dedicated team, including <strong>Mr. Dipak Patel</strong> (Marketing Head) and <strong>Mr. Vrishketu Ray</strong> (IT & Management Head), works tirelessly to ensure that talent is recognized and nurtured, regardless of financial barriers.
-              </p>
-            </>
+            <p className="text-gray-500 italic">About content not available.</p>
           )}
         </div>
         <div className="space-y-6">
@@ -376,7 +402,7 @@ function HomePage() {
     <div className="space-y-16 py-8">
       {/* Hero Section */}
       <section className="relative h-[70vh] flex items-center justify-center text-center text-white bg-navy-900 rounded-3xl overflow-hidden shadow-2xl">
-        <img src="https://picsum.photos/seed/education/1920/1080" alt="Students" className="absolute inset-0 w-full h-full object-cover opacity-30" referrerPolicy="no-referrer" />
+        <div className="absolute inset-0 bg-navy-900"></div>
         <div className="relative z-10 p-8 max-w-4xl">
           <h1 className="text-6xl font-extrabold mb-6 tracking-tight">UGRASENA EDUCUM PRIVATE LIMITED</h1>
           <p className="text-3xl font-light italic text-gold-500">"Empowering Minds, Shaping Futures"</p>
@@ -590,11 +616,12 @@ function GalleryPage() {
 function AdminPanel() {
   const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'posts' | 'notifications' | 'settings' | 'registrations'>('posts');
+  const [activeTab, setActiveTab] = useState<'posts' | 'notifications' | 'settings' | 'registrations' | 'team'>('posts');
   
   const [posts, setPosts] = useState<Post[]>([]);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [registrations, setRegistrations] = useState<any[]>([]);
+  const [team, setTeam] = useState<any[]>([]);
   const [settings, setSettings] = useState<CompanySettings>({ contact_number: '', email_address: '', office_address: '', notice_board: '', logo_url: '' });
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
@@ -607,10 +634,13 @@ function AdminPanel() {
 
   const [newPost, setNewPost] = useState({ title: '', description: '', image_url: '', video_link: '' });
   const [newNotification, setNewNotification] = useState('');
+  const [newTeamMember, setNewTeamMember] = useState({ name: '', role: '', order_index: 0 });
   const [editingPost, setEditingPost] = useState<Post | null>(null);
+  const [editingTeamMember, setEditingTeamMember] = useState<any | null>(null);
   const [selectedPosts, setSelectedPosts] = useState<string[]>([]);
   const [selectedNotifications, setSelectedNotifications] = useState<string[]>([]);
   const [selectedRegistrations, setSelectedRegistrations] = useState<string[]>([]);
+  const [selectedTeamMembers, setSelectedTeamMembers] = useState<string[]>([]);
 
   useEffect(() => {
     async function checkUser() {
@@ -644,16 +674,18 @@ function AdminPanel() {
   async function fetchData() {
     if (!supabase) return;
     try {
-      const [{ data: postsData }, { data: regData }, { data: notifData }, { data: companyData }] = await Promise.all([
+      const [{ data: postsData }, { data: regData }, { data: notifData }, { data: companyData }, { data: teamData }] = await Promise.all([
         supabase.from('posts').select('*').order('created_at', { ascending: false }),
         supabase.from('registrations').select('*').order('created_at', { ascending: false }),
         supabase.from('notifications').select('*').order('created_at', { ascending: false }),
-        supabase.from('company_info').select('*').eq('id', 1).single()
+        supabase.from('company_info').select('*').eq('id', 1).single(),
+        supabase.from('team').select('*').order('order_index', { ascending: true })
       ]);
 
       setPosts(postsData || []);
       setRegistrations(regData || []);
       setNotifications(notifData || []);
+      setTeam(teamData || []);
       
       if (companyData) {
         setSettings(prev => ({ ...prev, ...companyData }));
@@ -765,6 +797,47 @@ function AdminPanel() {
     window.scrollTo(0, 0);
   };
 
+  const handleCreateTeamMember = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!supabase) return;
+    
+    if (editingTeamMember) {
+      const { error } = await supabase.from('team').update(newTeamMember).eq('id', editingTeamMember.id);
+      if (error) alert('Error updating team member.');
+      else {
+        alert('Team member updated!');
+        setEditingTeamMember(null);
+        setNewTeamMember({ name: '', role: '', order_index: 0 });
+        fetchData();
+      }
+    } else {
+      const { error } = await supabase.from('team').insert([newTeamMember]);
+      if (error) alert('Error adding team member.');
+      else {
+        alert('Team member added!');
+        setNewTeamMember({ name: '', role: '', order_index: 0 });
+        fetchData();
+      }
+    }
+  };
+
+  const handleDeleteTeamMember = async (id: string) => {
+    if (!supabase) return;
+    const { error } = await supabase.from('team').delete().eq('id', id);
+    if (error) alert('Error deleting team member.');
+    else fetchData();
+  };
+
+  const handleEditTeamMember = (member: any) => {
+    setEditingTeamMember(member);
+    setNewTeamMember({
+      name: member.name,
+      role: member.role,
+      order_index: member.order_index
+    });
+    setActiveTab('team');
+  };
+
   const handleDeleteRegistration = async (id: string) => {
     if (!supabase) return;
     const { error } = await supabase.from('registrations').delete().eq('id', id);
@@ -812,6 +885,7 @@ function AdminPanel() {
           {[
             { id: 'posts', label: 'Gallery & Posts', icon: Image },
             { id: 'notifications', label: 'Notifications', icon: Bell },
+            { id: 'team', label: 'Leadership Team', icon: Users },
             { id: 'settings', label: 'Company Info', icon: Settings },
             { id: 'registrations', label: 'Registrations', icon: Plus }
           ].map(tab => (
@@ -925,6 +999,62 @@ function AdminPanel() {
                     <button onClick={() => handleDeleteNotification(n.id)} className="text-red-500 hover:text-red-700 p-2">
                       <Trash2 size={18} />
                     </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'team' && (
+            <div className="space-y-12">
+              <div className="flex justify-between items-center">
+                <h3 className="text-2xl font-bold text-navy-900 flex items-center gap-2">
+                  {editingTeamMember ? <Edit size={24} /> : <Plus size={24} />} {editingTeamMember ? 'Edit Member' : 'Add Team Member'}
+                </h3>
+                {selectedTeamMembers.length > 0 && (
+                  <button onClick={() => handleBulkDelete('team', selectedTeamMembers, setSelectedTeamMembers)} className="bg-red-600 text-white px-4 py-2 rounded-lg font-bold hover:bg-red-700 transition-all">
+                    Delete Selected ({selectedTeamMembers.length})
+                  </button>
+                )}
+              </div>
+              <form onSubmit={handleCreateTeamMember} className="bg-gray-50 p-6 rounded-2xl border border-gray-200">
+                <div className="grid md:grid-cols-3 gap-4 mb-4">
+                  <input type="text" placeholder="Name" className="p-3 border rounded-lg" value={newTeamMember.name} onChange={e => setNewTeamMember({...newTeamMember, name: e.target.value})} required />
+                  <input type="text" placeholder="Role" className="p-3 border rounded-lg" value={newTeamMember.role} onChange={e => setNewTeamMember({...newTeamMember, role: e.target.value})} required />
+                  <input type="number" placeholder="Order Index" className="p-3 border rounded-lg" value={newTeamMember.order_index} onChange={e => setNewTeamMember({...newTeamMember, order_index: parseInt(e.target.value)})} required />
+                </div>
+                <div className="flex gap-2">
+                  <button type="submit" className="bg-navy-900 text-gold-500 px-8 py-2 rounded-lg font-bold hover:bg-navy-800 transition-all">
+                    {editingTeamMember ? 'Update Member' : 'Add Member'}
+                  </button>
+                  {editingTeamMember && (
+                    <button type="button" onClick={() => { setEditingTeamMember(null); setNewTeamMember({ name: '', role: '', order_index: 0 }); }} className="bg-gray-200 text-gray-700 px-8 py-2 rounded-lg font-bold">
+                      Cancel
+                    </button>
+                  )}
+                </div>
+              </form>
+
+              <div className="grid md:grid-cols-2 gap-6">
+                {team.map(m => (
+                  <div key={m.id} className="border border-gray-100 rounded-2xl p-4 flex gap-4 bg-white hover:shadow-md transition-shadow relative">
+                    <input type="checkbox" className="absolute top-4 left-4" checked={selectedTeamMembers.includes(m.id)} onChange={e => {
+                      if (e.target.checked) setSelectedTeamMembers([...selectedTeamMembers, m.id]);
+                      else setSelectedTeamMembers(selectedTeamMembers.filter(id => id !== m.id));
+                    }} />
+                    <div className="flex-grow ml-6">
+                      <h4 className="font-bold text-navy-900">{m.name}</h4>
+                      <p className="text-sm text-gold-600 font-medium">{m.role}</p>
+                      <p className="text-xs text-gray-400 mt-1">Order: {m.order_index}</p>
+                      <div className="flex gap-3 mt-3">
+                        <button onClick={() => handleEditTeamMember(m)} className="text-blue-600 hover:text-blue-800 flex items-center gap-1 text-xs font-bold">
+                          <Edit size={14} /> Edit
+                        </button>
+                        <button onClick={() => handleDeleteTeamMember(m.id)} className="text-red-600 hover:text-red-800 flex items-center gap-1 text-xs font-bold">
+                          <Trash2 size={14} /> Delete
+                        </button>
+                      </div>
+                    </div>
                   </div>
                 ))}
               </div>

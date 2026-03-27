@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 
 export const Logo = () => {
-  const [logoUrl, setLogoUrl] = useState("https://raw.githubusercontent.com/vrishketuray0/ugrasena-educum/main/logo.png");
+  const [logoUrl, setLogoUrl] = useState<string | null>(null);
 
   useEffect(() => {
     async function fetchLogo() {
@@ -25,12 +25,18 @@ export const Logo = () => {
 
   return (
     <div className="flex items-center gap-2 bg-white/10 p-2 rounded-lg backdrop-blur-sm border border-gold-500/30">
-      <img 
-        src={logoUrl} 
-        alt="Ugrasena Educum Logo" 
-        className="h-12 w-auto object-contain"
-        referrerPolicy="no-referrer"
-      />
+      {logoUrl ? (
+        <img 
+          src={logoUrl} 
+          alt="Ugrasena Educum Logo" 
+          className="h-12 w-auto object-contain"
+          referrerPolicy="no-referrer"
+        />
+      ) : (
+        <div className="h-12 w-12 bg-gold-500/20 rounded flex items-center justify-center text-gold-500 font-bold">
+          UE
+        </div>
+      )}
       <span className="font-bold text-lg text-gold-500 hidden md:block">UGRASENA EDUCUM</span>
     </div>
   );
