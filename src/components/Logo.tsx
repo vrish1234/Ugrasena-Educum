@@ -24,20 +24,23 @@ export const Logo = () => {
   }, []);
 
   return (
-    <div className="flex items-center gap-2 bg-white/10 p-2 rounded-lg backdrop-blur-sm border border-gold-500/30">
+    <div className="flex items-center gap-4 glass-dark p-2.5 px-5 rounded-2xl border border-gold-500/20 shadow-2xl group hover:border-gold-500/40 transition-all duration-500">
       {logoUrl ? (
         <img 
           src={logoUrl} 
           alt="Ugrasena Educum Logo" 
-          className="h-12 w-auto object-contain"
+          className="h-10 md:h-14 w-auto object-contain drop-shadow-[0_0_10px_rgba(251,192,45,0.3)] group-hover:scale-110 transition-transform duration-700"
           referrerPolicy="no-referrer"
         />
       ) : (
-        <div className="h-12 w-12 bg-gold-500/20 rounded flex items-center justify-center text-gold-500 font-bold">
+        <div className="h-10 w-10 md:h-14 md:w-14 glass-gold rounded-xl flex items-center justify-center text-gold-500 font-black text-xl border border-gold-500/30 shadow-inner">
           UE
         </div>
       )}
-      <span className="font-bold text-lg text-gold-500 hidden md:block">UGRASENA EDUCUM</span>
+      <div className="flex flex-col leading-none">
+        <span className="font-black text-base md:text-2xl text-gold-500 tracking-tighter uppercase italic">UGRASENA</span>
+        <span className="font-bold text-[10px] md:text-sm text-white/40 uppercase tracking-[0.3em] mt-0.5">EDUCUM</span>
+      </div>
     </div>
   );
 };

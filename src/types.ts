@@ -23,6 +23,16 @@ export interface Notification {
   created_at: string;
 }
 
+export interface TeamMember {
+  id: string;
+  name: string;
+  role: string;
+  email?: string;
+  contact_number?: string;
+  order_index: number;
+  created_at: string;
+}
+
 export interface CompanySettings {
   contact_number: string;
   email_address: string;
@@ -31,4 +41,9 @@ export interface CompanySettings {
   about_us?: string;
   logo_url?: string;
   marquee_speed?: number;
+  hero_title?: string;
+  hero_subtitle?: string;
+  hero_tagline?: string;
+  hero_image_url?: string;
+  hero_video_url?: string;
 }

@@ -1,17 +1,17 @@
 import React, { useState } from 'react';
 import { supabase } from '../lib/supabase';
 
-interface ImageUploadProps {
+interface VideoUploadProps {
   onUpload: (url: string) => void;
 }
 
-export function ImageUpload({ onUpload }: ImageUploadProps) {
+export function VideoUpload({ onUpload }: VideoUploadProps) {
   const [uploading, setUploading] = useState(false);
   const [progress, setProgress] = useState(0);
   const [message, setMessage] = useState<string | null>(null);
   const [status, setStatus] = useState<'idle' | 'uploading' | 'success' | 'error'>('idle');
 
-  const uploadImage = async (event: React.ChangeEvent<HTMLInputElement>) => {
+  const uploadVideo = async (event: React.ChangeEvent<HTMLInputElement>) => {
     try {
       setUploading(true);
       setStatus('uploading');
@@ -19,7 +19,7 @@ export function ImageUpload({ onUpload }: ImageUploadProps) {
       setMessage('Uploading...');
 
       if (!event.target.files || event.target.files.length === 0) {
-        throw new Error('You must select an image to upload.');
+        throw new Error('You must select a video to upload.');
       }
 
       const file = event.target.files[0];
@@ -30,7 +30,7 @@ export function ImageUpload({ onUpload }: ImageUploadProps) {
       if (!supabase) return;
 
       const { error: uploadError } = await supabase.storage
-        .from('logo')
+        .from('logo') // Assuming 'logo' bucket is used for all uploads
         .upload(filePath, file);
 
       if (uploadError) throw uploadError;
@@ -59,8 +59,8 @@ export function ImageUpload({ onUpload }: ImageUploadProps) {
       <div className="relative group">
         <input
           type="file"
-          accept="image/*"
-          onChange={uploadImage}
+          accept="video/*"
+          onChange={uploadVideo}
           disabled={uploading}
           className="block w-full text-sm text-white/30 file:mr-6 file:py-3 file:px-6 file:rounded-xl file:border-0 file:text-sm file:font-bold file:glass-gold file:text-gold-500 hover:file:bg-gold-500 hover:file:text-navy-900 transition-all cursor-pointer file:shadow-lg file:uppercase file:tracking-widest"
         />

@@ -82,6 +82,8 @@ CREATE TABLE IF NOT EXISTS team (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   name TEXT NOT NULL,
   role TEXT NOT NULL,
+  email TEXT,
+  contact_number TEXT,
   order_index INTEGER DEFAULT 0,
   created_at TIMESTAMPTZ DEFAULT now()
 );

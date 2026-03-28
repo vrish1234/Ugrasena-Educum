@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { motion } from 'framer-motion';
 import { supabase } from '../lib/supabase';
 import { Eye, EyeOff, Lock, Mail, AlertCircle } from 'lucide-react';
 
@@ -15,23 +16,15 @@ export function Auth() {
     setError(null);
     
     if (!supabase) {
-      setError('Supabase is not configured. Please check your environment variables (VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY).');
+      setError('Supabase is not configured. Please check your environment variables.');
       setLoading(false);
       return;
     }
 
     try {
       const { data, error: authError } = await supabase.auth.signInWithPassword({ email, password });
-      if (authError) {
-        if (authError.message.includes('Email not confirmed')) {
-          throw new Error('Email not confirmed. Please check your inbox or disable "Confirm Email" in Supabase Auth settings.');
-        }
-        if (authError.message.includes('Invalid login credentials')) {
-          throw new Error('Invalid email or password. Please check your credentials.');
-        }
-        throw authError;
-      }
-      if (!data.user) throw new Error('Login failed. No user data returned.');
+      if (authError) throw authError;
+      if (!data.user) throw new Error('Login failed.');
     } catch (err: any) {
       console.error('Auth error:', err);
       setError(err.message || 'An error occurred during authentication');
@@ -41,39 +34,39 @@ export function Auth() {
   };
 
   return (
-    <div className="w-full max-w-md mx-auto bg-white rounded-3xl shadow-2xl border border-gold-100 overflow-hidden">
-      <div className="bg-navy-900 p-8 text-center">
-        <h2 className="text-3xl font-bold text-gold-500 mb-2">
-          Admin Login
-        </h2>
-        <p className="text-gold-500/60 text-sm">
-          Login to access the admin dashboard
-        </p>
+    <motion.div 
+      initial={{ opacity: 0, scale: 0.95 }}
+      animate={{ opacity: 1, scale: 1 }}
+      className="w-full max-w-md mx-auto glass-card border-gold-500/20 overflow-hidden !p-0"
+    >
+      <div className="glass-dark p-10 text-center border-x-0 border-t-0 border-b-white/5">
+        <div className="inline-block p-4 glass-gold rounded-2xl mb-6 shadow-lg">
+          <Lock size={40} className="text-gold-500" />
+        </div>
+        <h2 className="text-3xl font-extrabold text-gold-500 tracking-tight">Admin Portal</h2>
+        <p className="text-white/40 mt-2 font-medium">Please sign in to continue</p>
       </div>
 
-      <form onSubmit={handleAuth} className="p-8 space-y-6">
+      <form onSubmit={handleAuth} className="p-10 space-y-8">
         {error && (
-          <div className="bg-red-50 border border-red-200 text-red-700 p-4 rounded-xl flex items-start gap-3 text-sm animate-in fade-in slide-in-from-top-2 duration-300">
+          <motion.div 
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="glass text-red-400 border-red-500/20 p-4 rounded-xl flex items-start gap-3 text-sm"
+          >
             <AlertCircle className="shrink-0" size={18} />
-            <p>{error}</p>
-          </div>
-        )}
-
-        {!supabase && !error && (
-          <div className="bg-red-50 border border-red-200 text-red-700 p-4 rounded-xl flex items-start gap-3 text-sm">
-            <AlertCircle className="shrink-0" size={18} />
-            <p><strong>Configuration Error:</strong> Supabase keys are missing in Settings.</p>
-          </div>
+            <p className="font-medium">{error}</p>
+          </motion.div>
         )}
 
         <div className="space-y-2">
-          <label className="text-sm font-bold text-gray-700 ml-1">Email Address</label>
-          <div className="relative">
-            <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+          <label className="text-xs font-bold text-gold-500 uppercase tracking-[0.2em] ml-1">Email Address</label>
+          <div className="relative group">
+            <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-white/20 group-focus-within:text-gold-500 transition-colors" size={18} />
             <input 
               type="email" 
-              placeholder="Enter your email" 
-              className="w-full pl-12 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-gold-500 focus:border-transparent outline-none transition-all" 
+              placeholder="admin@ugrasena.edu" 
+              className="w-full pl-12 pr-4 py-4 bg-white/5 border border-white/10 rounded-xl focus:ring-2 focus:ring-gold-500/50 focus:border-gold-500/50 outline-none transition-all text-white placeholder-white/10" 
               value={email} 
               onChange={e => setEmail(e.target.value)} 
               required 
@@ -82,13 +75,13 @@ export function Auth() {
         </div>
 
         <div className="space-y-2">
-          <label className="text-sm font-bold text-gray-700 ml-1">Password</label>
-          <div className="relative">
-            <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+          <label className="text-xs font-bold text-gold-500 uppercase tracking-[0.2em] ml-1">Password</label>
+          <div className="relative group">
+            <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-white/20 group-focus-within:text-gold-500 transition-colors" size={18} />
             <input 
               type={showPassword ? "text" : "password"} 
               placeholder="••••••••" 
-              className="w-full pl-12 pr-12 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-gold-500 focus:border-transparent outline-none transition-all" 
+              className="w-full pl-12 pr-12 py-4 bg-white/5 border border-white/10 rounded-xl focus:ring-2 focus:ring-gold-500/50 focus:border-gold-500/50 outline-none transition-all text-white placeholder-white/10" 
               value={password} 
               onChange={e => setPassword(e.target.value)} 
               required 
@@ -96,7 +89,7 @@ export function Auth() {
             <button 
               type="button"
               onClick={() => setShowPassword(!showPassword)}
-              className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-navy-900 transition-colors"
+              className="absolute right-4 top-1/2 -translate-y-1/2 text-white/20 hover:text-gold-500 transition-colors"
             >
               {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
             </button>
@@ -105,28 +98,12 @@ export function Auth() {
 
         <button 
           type="submit" 
-          className="w-full bg-navy-900 text-gold-500 py-4 rounded-xl font-bold text-lg hover:bg-navy-800 active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-navy-900/20" 
+          className="w-full glass-gold text-gold-500 py-4 rounded-xl font-bold text-lg hover:bg-gold-500 hover:text-navy-900 transition-all duration-500 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-gold-500/20 uppercase tracking-[0.2em]" 
           disabled={loading || !supabase}
         >
-          {loading ? (
-            <span className="flex items-center justify-center gap-2">
-              <span className="w-5 h-5 border-2 border-gold-500 border-t-transparent rounded-full animate-spin"></span>
-              Logging in...
-            </span>
-          ) : 'Login'}
+          {loading ? 'Authenticating...' : 'Sign In'}
         </button>
-
-        <div className="text-center p-4 bg-gray-50 rounded-xl border border-gray-100 space-y-2">
-          <p className="text-xs text-gray-500 leading-relaxed font-bold">
-            Registration is disabled. Only authorized administrators can log in.
-          </p>
-          <div className="text-[10px] text-gray-400 text-left space-y-1">
-            <p>• Ensure you have created an account in the Supabase Dashboard.</p>
-            <p>• Check if "Confirm Email" is disabled in Supabase Auth settings.</p>
-            <p>• Verify that your email and password are correct.</p>
-          </div>
-        </div>
       </form>
-    </div>
+    </motion.div>
   );
 }
