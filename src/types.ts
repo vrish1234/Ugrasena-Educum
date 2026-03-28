@@ -6,6 +6,7 @@ export interface Post {
   video_link?: string;
   created_at: string;
   likes_count?: number;
+  comments_count?: number;
 }
 
 export interface Comment {
@@ -29,4 +30,5 @@ export interface CompanySettings {
   notice_board: string;
   about_us?: string;
   logo_url?: string;
+  marquee_speed?: number;
 }

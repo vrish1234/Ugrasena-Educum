@@ -17,8 +17,32 @@
 
 html {
   scroll-behavior: smooth;
+  overflow-y: scroll;
+  overflow-x: hidden;
+  width: 100%;
 }
 
 body {
   font-family: var(--font-sans);
+  overflow-x: hidden;
+  width: 100%;
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  height: 8px;
+  width: 8px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 4px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #d4af37;
+  border-radius: 4px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #c5a028;
 }

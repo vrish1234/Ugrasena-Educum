@@ -6,7 +6,8 @@ CREATE TABLE IF NOT EXISTS company_info (
   office_address TEXT,
   notice_board TEXT,
   about_us TEXT,
-  logo_url TEXT
+  logo_url TEXT,
+  marquee_speed INTEGER DEFAULT 25
 );
 
 -- Create posts table
@@ -17,6 +18,7 @@ CREATE TABLE IF NOT EXISTS posts (
   image_url TEXT,
   video_link TEXT,
   likes_count INTEGER DEFAULT 0,
+  comments_count INTEGER DEFAULT 0,
   created_at TIMESTAMPTZ DEFAULT now()
 );
 
@@ -45,6 +47,11 @@ CREATE TABLE IF NOT EXISTS comments (
   content TEXT NOT NULL,
   created_at TIMESTAMPTZ DEFAULT now()
 );
+
+-- comments policies
+CREATE POLICY "Allow public read access on comments" ON comments FOR SELECT USING (true);
+CREATE POLICY "Allow public insert on comments" ON comments FOR INSERT WITH CHECK (true);
+CREATE POLICY "Allow authenticated all access on comments" ON comments FOR ALL TO authenticated USING (true) WITH CHECK (true);
 
 -- Enable RLS on all tables
 ALTER TABLE company_info ENABLE ROW LEVEL SECURITY;

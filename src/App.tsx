@@ -5,6 +5,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Link, useNavigate } from 'react-router-dom';
+import { motion } from 'motion/react';
 import { supabase } from './lib/supabase';
 import { Logo } from './components/Logo';
 import { Post, Notification, CompanySettings } from './types';
@@ -69,7 +70,7 @@ function Layout({ children }: { children: React.ReactNode }) {
       {/* Notice Board Bar */}
       {settings.notice_board && (
         <div className="bg-gold-500 text-navy-900 py-2 px-4 overflow-hidden whitespace-nowrap z-[60]">
-          <div className="animate-marquee inline-block font-bold">
+          <div className="animate-marquee inline-block font-bold" style={{ animationDuration: `${settings.marquee_speed || 25}s` }}>
             {settings.notice_board}
           </div>
         </div>
@@ -94,8 +95,8 @@ function Layout({ children }: { children: React.ReactNode }) {
       <main className="flex-grow p-4 z-10">{children}</main>
       <footer className="bg-navy-900 text-gold-500 p-8 text-center text-sm border-t border-gold-500 z-10">
         <p className="font-bold text-lg mb-2 transition-all duration-300 hover:text-white cursor-default">UGRASENA EDUCUM PRIVATE LIMITED</p>
-        <p className="transition-all duration-300 hover:text-white cursor-default">Registered Office: {settings.office_address} | CIN: U85500BR2026PTC083704</p>
-        <p className="transition-all duration-300 hover:text-white cursor-default">Contact: {settings.contact_number} | Email: {settings.email_address}</p>
+        <p className="transition-all duration-300 hover:text-white cursor-default break-words max-w-4xl mx-auto">Registered Office: {settings.office_address} | CIN: U85500BR2026PTC083704</p>
+        <p className="transition-all duration-300 hover:text-white cursor-default break-words max-w-4xl mx-auto mt-1">Contact: {settings.contact_number} | Email: {settings.email_address}</p>
         <div className="mt-6">
           <Link to="/secret-dashboard" className="bg-gold-500/10 hover:bg-gold-500 text-gold-500 hover:text-navy-900 border border-gold-500 px-4 py-1 rounded-full transition-all text-xs font-bold">
             Admin Dashboard Access
@@ -167,7 +168,7 @@ function ContactPage() {
     fetchTeam();
 
     // Add real-time subscription
-    const channel = supabase?.channel('public_contact_info_changes')
+    const companyChannel = supabase?.channel('public_contact_info_changes')
       .on('postgres_changes', { 
         event: 'UPDATE', 
         schema: 'public', 
@@ -182,8 +183,15 @@ function ContactPage() {
       })
       .subscribe();
 
+    const teamChannel = supabase?.channel('public_team_changes')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'team' }, () => {
+        fetchTeam();
+      })
+      .subscribe();
+
     return () => {
-      supabase?.removeChannel(channel);
+      supabase?.removeChannel(companyChannel);
+      supabase?.removeChannel(teamChannel);
     };
   }, []);
 
@@ -191,26 +199,26 @@ function ContactPage() {
     <div className="max-w-4xl mx-auto py-16 px-4">
       <h2 className="text-4xl font-bold text-navy-900 mb-12 text-center">Contact Us & Leadership</h2>
       
-      <div className="grid md:grid-cols-2 gap-8 mb-16">
-        <div className="bg-white p-8 rounded-2xl shadow-md border border-gold-200 flex flex-col">
-          <h3 className="text-2xl font-bold text-navy-900 mb-6">Get In Touch</h3>
-          <div className="space-y-4 flex-grow">
+      <div className="grid md:grid-cols-2 gap-8 mb-16 items-stretch">
+        <div className="bg-white p-8 rounded-2xl shadow-md border border-gold-200 flex flex-col h-80">
+          <h3 className="text-2xl font-bold text-navy-900 mb-6 shrink-0">Get In Touch</h3>
+          <div className="space-y-4 flex-grow overflow-y-auto pr-2">
             {info.contact_number && (
-              <div className="flex items-center gap-3 text-gray-700">
-                <Phone className="text-gold-500 shrink-0" size={20} />
-                <span>{info.contact_number}</span>
+              <div className="flex items-start gap-3 text-gray-700">
+                <Phone className="text-gold-500 shrink-0 mt-1" size={20} />
+                <span className="break-words">{info.contact_number}</span>
               </div>
             )}
             {info.email_address && (
-              <div className="flex items-center gap-3 text-gray-700">
-                <Mail className="text-gold-500 shrink-0" size={20} />
-                <span>{info.email_address}</span>
+              <div className="flex items-start gap-3 text-gray-700">
+                <Mail className="text-gold-500 shrink-0 mt-1" size={20} />
+                <span className="break-words">{info.email_address}</span>
               </div>
             )}
             {info.office_address && (
-              <div className="flex items-center gap-3 text-gray-700">
-                <MapPin className="text-gold-500 shrink-0" size={20} />
-                <span>{info.office_address}</span>
+              <div className="flex items-start gap-3 text-gray-700">
+                <MapPin className="text-gold-500 shrink-0 mt-1" size={20} />
+                <span className="break-words">{info.office_address}</span>
               </div>
             )}
             {!info.contact_number && !info.email_address && !info.office_address && (
@@ -219,30 +227,32 @@ function ContactPage() {
           </div>
         </div>
 
-        <div className="bg-white p-8 rounded-2xl shadow-md border border-gold-200">
-          <h3 className="text-2xl font-bold text-navy-900 mb-4">Our Location</h3>
-          {info.office_address ? (
-            <p className="text-gray-700 leading-relaxed">
-              Registered Office: {info.office_address}<br />
-              CIN: U85500BR2026PTC083704
-            </p>
-          ) : (
-            <p className="text-gray-500 italic">Address not available.</p>
-          )}
+        <div className="bg-white p-8 rounded-2xl shadow-md border border-gold-200 flex flex-col h-80">
+          <h3 className="text-2xl font-bold text-navy-900 mb-6 shrink-0">Our Location</h3>
+          <div className="flex-grow overflow-y-auto pr-2">
+            {info.office_address ? (
+              <p className="text-gray-700 leading-relaxed break-words">
+                Registered Office: {info.office_address}<br /><br />
+                CIN: U85500BR2026PTC083704
+              </p>
+            ) : (
+              <p className="text-gray-500 italic">Address not available.</p>
+            )}
+          </div>
         </div>
       </div>
 
       <h3 className="text-3xl font-bold text-navy-900 mb-8 text-center">Meet Our Leadership</h3>
-      <div className="grid md:grid-cols-3 gap-8">
+      <div className="flex overflow-x-auto gap-8 pb-8 snap-x custom-scrollbar">
         {team.length > 0 ? (
           team.map((member, i) => (
-            <div key={i} className="bg-white p-8 rounded-2xl shadow-lg border-t-4 border-gold-500 text-center">
+            <div key={i} className="bg-white p-8 rounded-2xl shadow-lg border-t-4 border-gold-500 text-center min-w-[280px] snap-center shrink-0 flex flex-col justify-center">
               <h4 className="text-xl font-bold text-navy-900 mb-2">{member.name}</h4>
               <p className="text-gold-600 font-medium">{member.role}</p>
             </div>
           ))
         ) : (
-          <p className="text-center text-gray-500 italic col-span-3">Leadership team information not available.</p>
+          <p className="text-center w-full text-gray-500 italic">Leadership team information not available.</p>
         )}
       </div>
     </div>
@@ -251,10 +261,15 @@ function ContactPage() {
 
 function NoticePage() {
   const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [stickyNotice, setStickyNotice] = useState<string | null>(null);
 
   useEffect(() => {
     async function fetchNotifications() {
       if (!supabase) return;
+      
+      const { data: companyData } = await supabase.from('company_info').select('notice_board').eq('id', 1).single();
+      setStickyNotice(companyData?.notice_board || null);
+
       const { data } = await supabase.from('notifications').select('*').order('created_at', { ascending: false });
       if (data) setNotifications(data);
     }
@@ -265,6 +280,9 @@ function NoticePage() {
       .on('postgres_changes', { event: '*', schema: 'public', table: 'notifications' }, () => {
         fetchNotifications();
       })
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'company_info', filter: 'id=eq.1' }, () => {
+        fetchNotifications();
+      })
       .subscribe();
 
     return () => {
@@ -273,20 +291,30 @@ function NoticePage() {
   }, []);
 
   return (
-    <div className="max-w-4xl mx-auto py-12">
+    <div className="max-w-4xl mx-auto py-12 px-4">
       <h2 className="text-4xl font-bold text-navy-900 mb-8 text-center">Notice Board</h2>
       <div className="space-y-4">
+        {stickyNotice && (
+          <div className="bg-gold-50 p-6 rounded-2xl shadow-md border-l-4 border-gold-500">
+            <div className="flex items-center gap-2 mb-2">
+              <span className="bg-gold-500 text-navy-900 text-xs font-bold px-2 py-1 rounded uppercase tracking-wider">Latest Notice</span>
+            </div>
+            <p className="text-lg text-gray-800 font-medium">{stickyNotice}</p>
+          </div>
+        )}
         {notifications.length > 0 ? (
           notifications.map(n => (
-            <div key={n.id} className="bg-white p-6 rounded-2xl shadow-md border-l-4 border-gold-500">
+            <div key={n.id} className="bg-white p-6 rounded-2xl shadow-md border-l-4 border-gray-300">
               <p className="text-lg text-gray-700">{n.message}</p>
               <span className="text-xs text-gray-400 mt-2 block">{new Date(n.created_at).toLocaleDateString()}</span>
             </div>
           ))
         ) : (
-          <div className="bg-white p-8 rounded-2xl shadow-lg border border-gold-500 text-center">
-            <p className="text-lg text-gray-700 italic">No active notices at the moment.</p>
-          </div>
+          !stickyNotice && (
+            <div className="bg-white p-8 rounded-2xl shadow-lg border border-gold-500 text-center">
+              <p className="text-lg text-gray-700 italic">No active notices at the moment.</p>
+            </div>
+          )
         )}
       </div>
     </div>
@@ -374,7 +402,7 @@ function HomePage() {
         if (notices) setLatestNotice(notices.message);
       }
 
-      const { data: postsData } = await supabase.from('posts').select('*').order('created_at', { ascending: false }).limit(3);
+      const { data: postsData } = await supabase.from('posts').select('*').order('created_at', { ascending: false }).limit(1);
       if (postsData) setPosts(postsData);
     }
     fetchData();
@@ -429,23 +457,34 @@ function HomePage() {
 
       {/* Latest Posts Section */}
       {posts.length > 0 && (
-        <section className="max-w-6xl mx-auto px-4 py-12">
-          <h2 className="text-4xl font-bold text-navy-900 mb-12 text-center">Latest Updates</h2>
-          <div className="grid md:grid-cols-3 gap-8">
+        <section className="max-w-4xl mx-auto px-4 py-12">
+          <h2 className="text-4xl font-bold text-navy-900 mb-12 text-center">Latest Gallery Update</h2>
+          <div className="flex justify-center">
             {posts.map(post => (
-              <div key={post.id} className="bg-white rounded-2xl overflow-hidden shadow-lg border border-gold-100 flex flex-col">
+              <div key={post.id} className="bg-white rounded-2xl overflow-hidden shadow-lg border border-gold-100 flex flex-col md:flex-row w-full">
                 {post.image_url && (
-                  <img src={post.image_url} alt={post.title} className="w-full h-48 object-cover" referrerPolicy="no-referrer" />
-                )}
-                <div className="p-6 flex-grow">
-                  <h3 className="text-xl font-bold text-navy-900 mb-2">{post.title}</h3>
-                  <p className="text-gray-600 text-sm line-clamp-4 mb-4">{post.description}</p>
-                </div>
-                {post.video_link && (
-                  <div className="p-4 bg-gray-50 border-t border-gray-100">
-                    <a href={post.video_link} target="_blank" rel="noopener noreferrer" className="text-gold-600 font-bold text-sm hover:underline">Watch Video</a>
+                  <div className="w-full md:w-1/2 h-64 md:h-auto cursor-pointer relative group" onClick={() => {
+                    if (post.video_link) {
+                      window.open(post.video_link, '_blank', 'noopener,noreferrer');
+                    }
+                  }}>
+                    <img src={post.image_url} alt={post.title} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                    {post.video_link && (
+                      <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                        <span className="text-white font-bold bg-navy-900/50 px-4 py-2 rounded-full backdrop-blur-sm">Open Link</span>
+                      </div>
+                    )}
                   </div>
                 )}
+                <div className="p-8 flex flex-col justify-center w-full md:w-1/2">
+                  <h3 className="text-2xl font-bold text-navy-900 mb-4">{post.title}</h3>
+                  <p className="text-gray-600 text-base mb-6">{post.description}</p>
+                  {post.video_link && (
+                    <a href={post.video_link} target="_blank" rel="noopener noreferrer" className="inline-block bg-gold-500 text-navy-900 px-6 py-2 rounded-full font-bold hover:bg-gold-600 transition-colors text-center">
+                      Open Link
+                    </a>
+                  )}
+                </div>
               </div>
             ))}
           </div>
@@ -457,10 +496,19 @@ function HomePage() {
 
 function GalleryPage() {
   const [posts, setPosts] = useState<Post[]>([]);
+  const [commentCounts, setCommentCounts] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(true);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [commentingPost, setCommentingPost] = useState<Post | null>(null);
   const [newComment, setNewComment] = useState({ name: '', content: '' });
+  const [likedPosts, setLikedPosts] = useState<Set<string>>(() => {
+    const saved = localStorage.getItem('likedPosts');
+    return saved ? new Set(JSON.parse(saved)) : new Set();
+  });
+
+  useEffect(() => {
+    localStorage.setItem('likedPosts', JSON.stringify(Array.from(likedPosts)));
+  }, [likedPosts]);
 
   useEffect(() => {
     fetchGallery();
@@ -468,17 +516,56 @@ function GalleryPage() {
 
   async function fetchGallery() {
     if (!supabase) return;
-    const { data } = await supabase.from('posts').select('*').not('image_url', 'is', null).order('created_at', { ascending: false });
-    if (data) setPosts(data);
+    const [{ data: postsData }, { data: commentsData }] = await Promise.all([
+      supabase.from('posts').select('*').not('image_url', 'is', null).order('created_at', { ascending: false }),
+      supabase.from('comments').select('post_id')
+    ]);
+    
+    if (postsData) setPosts(postsData);
+    
+    if (commentsData) {
+      const counts: Record<string, number> = {};
+      commentsData.forEach(c => {
+        counts[c.post_id] = (counts[c.post_id] || 0) + 1;
+      });
+      setCommentCounts(counts);
+    }
+    
     setLoading(false);
   }
 
   const handleLike = async (post: Post) => {
     if (!supabase) return;
-    const newLikes = (post.likes_count || 0) + 1;
+    
+    const isLiked = likedPosts.has(post.id);
+    const newLikes = isLiked ? Math.max(0, (post.likes_count || 0) - 1) : (post.likes_count || 0) + 1;
+    
+    // Optimistic update
+    setPosts(currentPosts => currentPosts.map(p => p.id === post.id ? { ...p, likes_count: newLikes } : p));
+    setLikedPosts(prev => {
+      const newSet = new Set(prev);
+      if (isLiked) {
+        newSet.delete(post.id);
+      } else {
+        newSet.add(post.id);
+      }
+      return newSet;
+    });
+
     const { error } = await supabase.from('posts').update({ likes_count: newLikes }).eq('id', post.id);
-    if (!error) {
-      setPosts(posts.map(p => p.id === post.id ? { ...p, likes_count: newLikes } : p));
+    if (error) {
+      console.error("Error liking post:", error);
+      // Revert on error
+      setPosts(currentPosts => currentPosts.map(p => p.id === post.id ? { ...p, likes_count: post.likes_count } : p));
+      setLikedPosts(prev => {
+        const newSet = new Set(prev);
+        if (isLiked) {
+          newSet.add(post.id);
+        } else {
+          newSet.delete(post.id);
+        }
+        return newSet;
+      });
     }
   };
 
@@ -496,6 +583,12 @@ function GalleryPage() {
     if (error) {
       alert('Error adding comment. (Database table may not exist yet)');
     } else {
+      const newCount = (commentingPost.comments_count || 0) + 1;
+      await supabase.from('posts').update({ comments_count: newCount }).eq('id', commentingPost.id);
+      
+      setPosts(currentPosts => currentPosts.map(p => p.id === commentingPost.id ? { ...p, comments_count: newCount } : p));
+      setCommentCounts(prev => ({ ...prev, [commentingPost.id]: (prev[commentingPost.id] || 0) + 1 }));
+
       alert('Comment added!');
       setCommentingPost(null);
       setNewComment({ name: '', content: '' });
@@ -512,7 +605,13 @@ function GalleryPage() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           {posts.map((post) => (
             <div key={post.id} className="bg-white rounded-3xl overflow-hidden shadow-2xl border border-gold-100 group flex flex-col">
-              <div className="relative overflow-hidden h-72 cursor-pointer" onClick={() => setSelectedImage(post.image_url || null)}>
+              <div className="relative overflow-hidden h-72 cursor-pointer" onClick={() => {
+                if (post.video_link) {
+                  window.open(post.video_link, '_blank', 'noopener,noreferrer');
+                } else {
+                  setSelectedImage(post.image_url || null);
+                }
+              }}>
                 <img 
                   src={post.image_url} 
                   alt={post.title} 
@@ -520,7 +619,9 @@ function GalleryPage() {
                   referrerPolicy="no-referrer" 
                 />
                 <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                  <span className="text-white font-bold bg-navy-900/50 px-4 py-2 rounded-full backdrop-blur-sm">View Full Image</span>
+                  <span className="text-white font-bold bg-navy-900/50 px-4 py-2 rounded-full backdrop-blur-sm">
+                    {post.video_link ? 'Open Link' : 'View Full Image'}
+                  </span>
                 </div>
               </div>
               
@@ -529,20 +630,21 @@ function GalleryPage() {
                 <p className="text-gray-600 text-sm line-clamp-2 mb-4">{post.description}</p>
                 
                 <div className="mt-auto pt-4 border-t border-gray-100 flex justify-between items-center">
-                  <button 
+                  <motion.button 
+                    whileTap={{ scale: 0.8 }}
                     onClick={() => handleLike(post)}
-                    className="flex items-center gap-2 text-gray-500 hover:text-red-500 transition-colors group/like"
+                    className={`flex items-center gap-2 transition-colors group/like ${likedPosts.has(post.id) ? 'text-red-500' : 'text-gray-500 hover:text-red-500'}`}
                   >
-                    <Heart size={20} className={post.likes_count ? "fill-red-500 text-red-500" : "group-hover/like:fill-red-500"} />
+                    <Heart size={20} className={likedPosts.has(post.id) ? "fill-red-500 text-red-500" : "group-hover/like:fill-red-500"} />
                     <span className="font-bold text-sm">{post.likes_count || 0}</span>
-                  </button>
+                  </motion.button>
                   
                   <button 
                     onClick={() => setCommentingPost(post)}
                     className="flex items-center gap-2 text-gray-500 hover:text-blue-500 transition-colors"
                   >
                     <MessageCircle size={20} />
-                    <span className="font-bold text-sm">Comment</span>
+                    <span className="font-bold text-sm">{commentCounts[post.id] || 0} Comments</span>
                   </button>
                 </div>
               </div>
@@ -666,6 +768,8 @@ function AdminPanel() {
     }
   }, []);
 
+  const [commentCounts, setCommentCounts] = useState<Record<string, number>>({});
+
   useEffect(() => {
     if (user && supabase) {
       fetchData();
@@ -675,12 +779,13 @@ function AdminPanel() {
   async function fetchData() {
     if (!supabase) return;
     try {
-      const [{ data: postsData }, { data: regData }, { data: notifData }, { data: companyData }, { data: teamData }] = await Promise.all([
+      const [{ data: postsData }, { data: regData }, { data: notifData }, { data: companyData }, { data: teamData }, { data: commentsData }] = await Promise.all([
         supabase.from('posts').select('*').order('created_at', { ascending: false }),
         supabase.from('registrations').select('*').order('created_at', { ascending: false }),
         supabase.from('notifications').select('*').order('created_at', { ascending: false }),
         supabase.from('company_info').select('*').eq('id', 1).single(),
-        supabase.from('team').select('*').order('order_index', { ascending: true })
+        supabase.from('team').select('*').order('order_index', { ascending: true }),
+        supabase.from('comments').select('post_id')
       ]);
 
       setPosts(postsData || []);
@@ -691,12 +796,20 @@ function AdminPanel() {
       if (companyData) {
         setSettings(prev => ({ ...prev, ...companyData }));
       }
+
+      if (commentsData) {
+        const counts: Record<string, number> = {};
+        commentsData.forEach(c => {
+          counts[c.post_id] = (counts[c.post_id] || 0) + 1;
+        });
+        setCommentCounts(counts);
+      }
     } catch (err) {
       console.error('Error fetching data:', err);
     }
   }
 
-  const handleUpdateSettings = async (key: keyof CompanySettings, value: string) => {
+  const handleUpdateSettings = async (key: keyof CompanySettings, value: string | number) => {
     if (!supabase) return;
     // Use update instead of upsert to avoid overwriting other fields
     const { error } = await supabase.from('company_info').update({ [key]: value }).eq('id', 1);
@@ -908,61 +1021,90 @@ function AdminPanel() {
       </aside>
 
       {/* Main Content */}
-      <main className="flex-grow p-8">
-        <div className="flex justify-end mb-4">
-          <button onClick={fetchData} className="flex items-center gap-2 text-navy-900 hover:text-gold-600 font-bold transition-all">
-            <Settings size={18} className="animate-spin-slow" /> Refresh Data
-          </button>
-        </div>
-        <div className="bg-white rounded-3xl shadow-xl border border-gold-100 p-8">
-          {activeTab === 'posts' && (
+      <main className="flex-grow p-8 bg-gray-50 overflow-y-auto">
+        <div className="max-w-6xl mx-auto">
+          <div className="flex justify-between items-center mb-8">
+            <h1 className="text-3xl font-bold text-navy-900 capitalize">
+              {activeTab.replace('_', ' ')} Management
+            </h1>
+            <button onClick={fetchData} className="flex items-center gap-2 bg-white border border-gray-200 text-navy-900 px-4 py-2 rounded-lg hover:bg-gray-50 font-bold transition-all shadow-sm">
+              <Settings size={18} className="animate-spin-slow" /> Refresh Data
+            </button>
+          </div>
+          
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
+            {activeTab === 'posts' && (
             <div className="space-y-12">
-              <div className="flex justify-between items-center">
-                <h3 className="text-2xl font-bold text-navy-900 flex items-center gap-2">
-                  {editingPost ? <Edit size={24} /> : <Plus size={24} />} {editingPost ? 'Edit Post' : 'Create New Post'}
+              <div className="flex justify-between items-center mb-6">
+                <h3 className="text-xl font-bold text-navy-900 flex items-center gap-2">
+                  {editingPost ? <Edit size={20} /> : <Plus size={20} />} {editingPost ? 'Edit Post' : 'Create New Post'}
                 </h3>
                 {selectedPosts.length > 0 && (
-                  <button onClick={() => handleBulkDelete('posts', selectedPosts, setSelectedPosts)} className="bg-red-600 text-white px-4 py-2 rounded-lg font-bold hover:bg-red-700 transition-all">
+                  <button onClick={() => handleBulkDelete('posts', selectedPosts, setSelectedPosts)} className="bg-red-50 text-red-600 border border-red-200 px-4 py-2 rounded-lg font-bold hover:bg-red-100 transition-all text-sm">
                     Delete Selected ({selectedPosts.length})
                   </button>
                 )}
               </div>
-              <form onSubmit={handleCreatePost} className="bg-gray-50 p-6 rounded-2xl border border-gray-200">
-                <div className="grid md:grid-cols-2 gap-4 mb-4">
-                  <input type="text" placeholder="Title" className="p-3 border rounded-lg" value={newPost.title} onChange={e => setNewPost({...newPost, title: e.target.value})} required />
-                  <ImageUpload onUpload={(url) => setNewPost({...newPost, image_url: url})} />
-                  <input type="url" placeholder="Video Link (Optional)" className="p-3 border rounded-lg" value={newPost.video_link} onChange={e => setNewPost({...newPost, video_link: e.target.value})} />
+              <form onSubmit={handleCreatePost} className="bg-gray-50 p-6 rounded-xl border border-gray-200 mb-10">
+                <div className="grid md:grid-cols-2 gap-6 mb-6">
+                  <div className="space-y-2">
+                    <label className="text-sm font-semibold text-gray-700">Title</label>
+                    <input type="text" placeholder="Enter post title" className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-navy-900 focus:border-transparent outline-none transition-all" value={newPost.title} onChange={e => setNewPost({...newPost, title: e.target.value})} required />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-semibold text-gray-700">Image Upload</label>
+                    <ImageUpload onUpload={(url) => setNewPost({...newPost, image_url: url})} />
+                  </div>
+                  <div className="space-y-2 md:col-span-2">
+                    <label className="text-sm font-semibold text-gray-700">External Link (e.g., Google Form, Doc, Video)</label>
+                    <input type="url" placeholder="https://..." className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-navy-900 focus:border-transparent outline-none transition-all" value={newPost.video_link} onChange={e => setNewPost({...newPost, video_link: e.target.value})} />
+                  </div>
                 </div>
-                <textarea placeholder="Description" className="w-full p-3 border rounded-lg mb-4 h-32" value={newPost.description} onChange={e => setNewPost({...newPost, description: e.target.value})} required />
-                <div className="flex gap-2">
-                  <button type="submit" className="bg-navy-900 text-gold-500 px-8 py-2 rounded-lg font-bold hover:bg-navy-800 transition-all">
+                <div className="space-y-2 mb-6">
+                  <label className="text-sm font-semibold text-gray-700">Description</label>
+                  <textarea placeholder="Post description..." className="w-full p-3 border border-gray-300 rounded-lg h-32 focus:ring-2 focus:ring-navy-900 focus:border-transparent outline-none transition-all resize-none" value={newPost.description} onChange={e => setNewPost({...newPost, description: e.target.value})} required />
+                </div>
+                <div className="flex gap-3">
+                  <button type="submit" className="bg-navy-900 text-white px-6 py-2.5 rounded-lg font-bold hover:bg-navy-800 transition-all shadow-sm">
                     {editingPost ? 'Update Post' : 'Publish Post'}
                   </button>
                   {editingPost && (
-                    <button type="button" onClick={() => { setEditingPost(null); setNewPost({ title: '', description: '', image_url: '', video_link: '' }); }} className="bg-gray-200 text-gray-700 px-8 py-2 rounded-lg font-bold">
+                    <button type="button" onClick={() => { setEditingPost(null); setNewPost({ title: '', description: '', image_url: '', video_link: '' }); }} className="bg-white border border-gray-300 text-gray-700 px-6 py-2.5 rounded-lg font-bold hover:bg-gray-50 transition-all">
                       Cancel
                     </button>
                   )}
                 </div>
               </form>
 
-              <div className="grid md:grid-cols-2 gap-6">
+              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {posts.map(p => (
-                  <div key={p.id} className="border border-gray-100 rounded-2xl p-4 flex gap-4 bg-white hover:shadow-md transition-shadow relative">
-                    <input type="checkbox" className="absolute top-4 left-4" checked={selectedPosts.includes(p.id)} onChange={e => {
-                      if (e.target.checked) setSelectedPosts([...selectedPosts, p.id]);
-                      else setSelectedPosts(selectedPosts.filter(id => id !== p.id));
-                    }} />
-                    {p.image_url && <img src={p.image_url} alt="" className="w-24 h-24 object-cover rounded-lg flex-shrink-0 ml-6" />}
-                    <div className="flex-grow">
-                      <h4 className="font-bold text-navy-900 line-clamp-1">{p.title}</h4>
-                      <p className="text-sm text-gray-500 line-clamp-2 mb-2">{p.description}</p>
-                      <div className="flex gap-3">
-                        <button onClick={() => handleEditPost(p)} className="text-blue-600 hover:text-blue-800 flex items-center gap-1 text-xs font-bold">
-                          <Edit size={14} /> Edit
+                  <div key={p.id} className="border border-gray-200 rounded-xl overflow-hidden bg-white hover:shadow-md transition-all relative group flex flex-col">
+                    <div className="absolute top-3 left-3 z-10">
+                      <input type="checkbox" className="w-4 h-4 rounded border-gray-300 text-navy-900 focus:ring-navy-900 cursor-pointer" checked={selectedPosts.includes(p.id)} onChange={e => {
+                        if (e.target.checked) setSelectedPosts([...selectedPosts, p.id]);
+                        else setSelectedPosts(selectedPosts.filter(id => id !== p.id));
+                      }} />
+                    </div>
+                    {p.image_url ? (
+                      <img src={p.image_url} alt="" className="w-full h-40 object-cover" />
+                    ) : (
+                      <div className="w-full h-40 bg-gray-100 flex items-center justify-center text-gray-400">
+                        <Image size={32} />
+                      </div>
+                    )}
+                    <div className="p-5 flex-grow flex flex-col">
+                      <h4 className="font-bold text-navy-900 line-clamp-1 mb-1">{p.title}</h4>
+                      <p className="text-sm text-gray-500 line-clamp-2 mb-4 flex-grow">{p.description}</p>
+                      <div className="flex items-center gap-4 mb-4 text-sm font-semibold">
+                        <span className="flex items-center gap-1.5 text-gold-600"><Heart size={16} className="fill-current" /> {p.likes_count || 0} Likes</span>
+                        <span className="flex items-center gap-1.5 text-blue-600"><MessageCircle size={16} /> {commentCounts[p.id] || 0} Comments</span>
+                      </div>
+                      <div className="flex gap-3 pt-4 border-t border-gray-100 mt-auto">
+                        <button onClick={() => handleEditPost(p)} className="text-blue-600 hover:text-blue-800 flex items-center gap-1.5 text-sm font-semibold transition-colors">
+                          <Edit size={16} /> Edit
                         </button>
-                        <button onClick={() => handleDeletePost(p.id)} className="text-red-600 hover:text-red-800 flex items-center gap-1 text-xs font-bold">
-                          <Trash2 size={14} /> Delete
+                        <button onClick={() => handleDeletePost(p.id)} className="text-red-600 hover:text-red-800 flex items-center gap-1.5 text-sm font-semibold transition-colors ml-auto">
+                          <Trash2 size={16} /> Delete
                         </button>
                       </div>
                     </div>
@@ -974,31 +1116,34 @@ function AdminPanel() {
 
           {activeTab === 'notifications' && (
             <div className="space-y-8">
-              <div className="flex justify-between items-center">
-                <h3 className="text-2xl font-bold text-navy-900 flex items-center gap-2"><Bell size={24} /> Send New Notification</h3>
+              <div className="flex justify-between items-center mb-6">
+                <h3 className="text-xl font-bold text-navy-900 flex items-center gap-2"><Bell size={20} /> Send New Notification</h3>
                 {selectedNotifications.length > 0 && (
-                  <button onClick={() => handleBulkDelete('notifications', selectedNotifications, setSelectedNotifications)} className="bg-red-600 text-white px-4 py-2 rounded-lg font-bold hover:bg-red-700 transition-all">
+                  <button onClick={() => handleBulkDelete('notifications', selectedNotifications, setSelectedNotifications)} className="bg-red-50 text-red-600 border border-red-200 px-4 py-2 rounded-lg font-bold hover:bg-red-100 transition-all text-sm">
                     Delete Selected ({selectedNotifications.length})
                   </button>
                 )}
               </div>
-              <form onSubmit={handleCreateNotification} className="bg-gray-50 p-6 rounded-2xl border border-gray-200">
-                <textarea placeholder="Type your notification message here..." className="w-full p-3 border rounded-lg mb-4 h-24" value={newNotification} onChange={e => setNewNotification(e.target.value)} required />
-                <button type="submit" className="bg-navy-900 text-gold-500 px-8 py-2 rounded-lg font-bold hover:bg-navy-800 transition-all">Send Notification</button>
+              <form onSubmit={handleCreateNotification} className="bg-gray-50 p-6 rounded-xl border border-gray-200 mb-8">
+                <div className="space-y-2 mb-4">
+                  <label className="text-sm font-semibold text-gray-700">Message</label>
+                  <textarea placeholder="Type your notification message here..." className="w-full p-3 border border-gray-300 rounded-lg h-24 focus:ring-2 focus:ring-navy-900 focus:border-transparent outline-none transition-all resize-none" value={newNotification} onChange={e => setNewNotification(e.target.value)} required />
+                </div>
+                <button type="submit" className="bg-navy-900 text-white px-6 py-2.5 rounded-lg font-bold hover:bg-navy-800 transition-all shadow-sm">Send Notification</button>
               </form>
 
               <div className="space-y-3">
                 {notifications.map(n => (
-                  <div key={n.id} className="flex items-center gap-4 p-4 border border-gray-100 rounded-xl bg-white hover:bg-gray-50 transition-colors">
-                    <input type="checkbox" checked={selectedNotifications.includes(n.id)} onChange={e => {
+                  <div key={n.id} className="flex items-start gap-4 p-5 border border-gray-200 rounded-xl bg-white hover:shadow-sm transition-all">
+                    <input type="checkbox" className="mt-1 w-4 h-4 rounded border-gray-300 text-navy-900 focus:ring-navy-900 cursor-pointer" checked={selectedNotifications.includes(n.id)} onChange={e => {
                       if (e.target.checked) setSelectedNotifications([...selectedNotifications, n.id]);
                       else setSelectedNotifications(selectedNotifications.filter(id => id !== n.id));
                     }} />
                     <div className="flex-grow">
-                      <p className="text-gray-700">{n.message}</p>
-                      <span className="text-[10px] text-gray-400">{new Date(n.created_at).toLocaleString()}</span>
+                      <p className="text-gray-800 font-medium mb-1">{n.message}</p>
+                      <span className="text-xs text-gray-500 font-medium">{new Date(n.created_at).toLocaleString()}</span>
                     </div>
-                    <button onClick={() => handleDeleteNotification(n.id)} className="text-red-500 hover:text-red-700 p-2">
+                    <button onClick={() => handleDeleteNotification(n.id)} className="text-gray-400 hover:text-red-600 transition-colors p-2 rounded-lg hover:bg-red-50">
                       <Trash2 size={18} />
                     </button>
                   </div>
@@ -1009,51 +1154,62 @@ function AdminPanel() {
 
           {activeTab === 'team' && (
             <div className="space-y-12">
-              <div className="flex justify-between items-center">
-                <h3 className="text-2xl font-bold text-navy-900 flex items-center gap-2">
-                  {editingTeamMember ? <Edit size={24} /> : <Plus size={24} />} {editingTeamMember ? 'Edit Member' : 'Add Team Member'}
+              <div className="flex justify-between items-center mb-6">
+                <h3 className="text-xl font-bold text-navy-900 flex items-center gap-2">
+                  {editingTeamMember ? <Edit size={20} /> : <Plus size={20} />} {editingTeamMember ? 'Edit Member' : 'Add Team Member'}
                 </h3>
                 {selectedTeamMembers.length > 0 && (
-                  <button onClick={() => handleBulkDelete('team', selectedTeamMembers, setSelectedTeamMembers)} className="bg-red-600 text-white px-4 py-2 rounded-lg font-bold hover:bg-red-700 transition-all">
+                  <button onClick={() => handleBulkDelete('team', selectedTeamMembers, setSelectedTeamMembers)} className="bg-red-50 text-red-600 border border-red-200 px-4 py-2 rounded-lg font-bold hover:bg-red-100 transition-all text-sm">
                     Delete Selected ({selectedTeamMembers.length})
                   </button>
                 )}
               </div>
-              <form onSubmit={handleCreateTeamMember} className="bg-gray-50 p-6 rounded-2xl border border-gray-200">
-                <div className="grid md:grid-cols-3 gap-4 mb-4">
-                  <input type="text" placeholder="Name" className="p-3 border rounded-lg" value={newTeamMember.name} onChange={e => setNewTeamMember({...newTeamMember, name: e.target.value})} required />
-                  <input type="text" placeholder="Role" className="p-3 border rounded-lg" value={newTeamMember.role} onChange={e => setNewTeamMember({...newTeamMember, role: e.target.value})} required />
-                  <input type="number" placeholder="Order Index" className="p-3 border rounded-lg" value={newTeamMember.order_index} onChange={e => setNewTeamMember({...newTeamMember, order_index: parseInt(e.target.value)})} required />
+              <form onSubmit={handleCreateTeamMember} className="bg-gray-50 p-6 rounded-xl border border-gray-200 mb-10">
+                <div className="grid md:grid-cols-3 gap-6 mb-6">
+                  <div className="space-y-2">
+                    <label className="text-sm font-semibold text-gray-700">Name</label>
+                    <input type="text" placeholder="John Doe" className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-navy-900 focus:border-transparent outline-none transition-all" value={newTeamMember.name} onChange={e => setNewTeamMember({...newTeamMember, name: e.target.value})} required />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-semibold text-gray-700">Role</label>
+                    <input type="text" placeholder="Director" className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-navy-900 focus:border-transparent outline-none transition-all" value={newTeamMember.role} onChange={e => setNewTeamMember({...newTeamMember, role: e.target.value})} required />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-semibold text-gray-700">Order Index</label>
+                    <input type="number" placeholder="1" className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-navy-900 focus:border-transparent outline-none transition-all" value={newTeamMember.order_index} onChange={e => setNewTeamMember({...newTeamMember, order_index: parseInt(e.target.value)})} required />
+                  </div>
                 </div>
-                <div className="flex gap-2">
-                  <button type="submit" className="bg-navy-900 text-gold-500 px-8 py-2 rounded-lg font-bold hover:bg-navy-800 transition-all">
+                <div className="flex gap-3">
+                  <button type="submit" className="bg-navy-900 text-white px-6 py-2.5 rounded-lg font-bold hover:bg-navy-800 transition-all shadow-sm">
                     {editingTeamMember ? 'Update Member' : 'Add Member'}
                   </button>
                   {editingTeamMember && (
-                    <button type="button" onClick={() => { setEditingTeamMember(null); setNewTeamMember({ name: '', role: '', order_index: 0 }); }} className="bg-gray-200 text-gray-700 px-8 py-2 rounded-lg font-bold">
+                    <button type="button" onClick={() => { setEditingTeamMember(null); setNewTeamMember({ name: '', role: '', order_index: 0 }); }} className="bg-white border border-gray-300 text-gray-700 px-6 py-2.5 rounded-lg font-bold hover:bg-gray-50 transition-all">
                       Cancel
                     </button>
                   )}
                 </div>
               </form>
 
-              <div className="grid md:grid-cols-2 gap-6">
+              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {team.map(m => (
-                  <div key={m.id} className="border border-gray-100 rounded-2xl p-4 flex gap-4 bg-white hover:shadow-md transition-shadow relative">
-                    <input type="checkbox" className="absolute top-4 left-4" checked={selectedTeamMembers.includes(m.id)} onChange={e => {
-                      if (e.target.checked) setSelectedTeamMembers([...selectedTeamMembers, m.id]);
-                      else setSelectedTeamMembers(selectedTeamMembers.filter(id => id !== m.id));
-                    }} />
+                  <div key={m.id} className="border border-gray-200 rounded-xl p-5 flex gap-4 bg-white hover:shadow-md transition-all relative group">
+                    <div className="absolute top-3 left-3 z-10">
+                      <input type="checkbox" className="w-4 h-4 rounded border-gray-300 text-navy-900 focus:ring-navy-900 cursor-pointer" checked={selectedTeamMembers.includes(m.id)} onChange={e => {
+                        if (e.target.checked) setSelectedTeamMembers([...selectedTeamMembers, m.id]);
+                        else setSelectedTeamMembers(selectedTeamMembers.filter(id => id !== m.id));
+                      }} />
+                    </div>
                     <div className="flex-grow ml-6">
-                      <h4 className="font-bold text-navy-900">{m.name}</h4>
-                      <p className="text-sm text-gold-600 font-medium">{m.role}</p>
-                      <p className="text-xs text-gray-400 mt-1">Order: {m.order_index}</p>
-                      <div className="flex gap-3 mt-3">
-                        <button onClick={() => handleEditTeamMember(m)} className="text-blue-600 hover:text-blue-800 flex items-center gap-1 text-xs font-bold">
-                          <Edit size={14} /> Edit
+                      <h4 className="font-bold text-navy-900 text-lg mb-1">{m.name}</h4>
+                      <p className="text-sm text-gold-600 font-semibold mb-2">{m.role}</p>
+                      <p className="text-xs text-gray-500 bg-gray-100 inline-block px-2 py-1 rounded">Order: {m.order_index}</p>
+                      <div className="flex gap-3 pt-4 mt-4 border-t border-gray-100">
+                        <button onClick={() => handleEditTeamMember(m)} className="text-blue-600 hover:text-blue-800 flex items-center gap-1.5 text-sm font-semibold transition-colors">
+                          <Edit size={16} /> Edit
                         </button>
-                        <button onClick={() => handleDeleteTeamMember(m.id)} className="text-red-600 hover:text-red-800 flex items-center gap-1 text-xs font-bold">
-                          <Trash2 size={14} /> Delete
+                        <button onClick={() => handleDeleteTeamMember(m.id)} className="text-red-600 hover:text-red-800 flex items-center gap-1.5 text-sm font-semibold transition-colors ml-auto">
+                          <Trash2 size={16} /> Delete
                         </button>
                       </div>
                     </div>
@@ -1065,93 +1221,104 @@ function AdminPanel() {
 
           {activeTab === 'settings' && (
             <div className="space-y-8">
-              <h3 className="text-2xl font-bold text-navy-900 flex items-center gap-2"><Settings size={24} /> Company Information</h3>
-              {successMessage && <div className="bg-green-100 text-green-800 p-4 rounded-lg">{successMessage}</div>}
-              <div className="grid md:grid-cols-2 gap-6">
-                <div className="space-y-2">
-                  <label className="text-sm font-bold text-gray-600">Company Logo</label>
+              <h3 className="text-xl font-bold text-navy-900 flex items-center gap-2 mb-6"><Settings size={20} /> Company Information</h3>
+              {successMessage && <div className="bg-green-50 text-green-700 border border-green-200 p-4 rounded-xl font-medium">{successMessage}</div>}
+              <div className="grid md:grid-cols-2 gap-8">
+                <div className="space-y-3 bg-gray-50 p-6 rounded-xl border border-gray-200">
+                  <label className="text-sm font-semibold text-gray-700">Company Logo</label>
                   <ImageUpload onUpload={(url) => handleUpdateSettings('logo_url', url)} />
-                  {settings.logo_url && <img src={settings.logo_url} alt="Logo" className="h-16 mt-2" />}
+                  {settings.logo_url && <img src={settings.logo_url} alt="Logo" className="h-16 mt-4 rounded border border-gray-200 bg-white p-2" />}
                 </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-bold text-gray-600 flex items-center gap-2"><Phone size={14} /> Contact Number</label>
-                  <div className="flex gap-2">
-                    <input type="text" className="flex-grow p-3 border rounded-lg" value={settings.contact_number || ''} onChange={e => setSettings({...settings, contact_number: e.target.value})} />
-                    <button onClick={() => handleUpdateSettings('contact_number', settings.contact_number)} className="bg-navy-900 text-gold-500 px-4 py-2 rounded-lg font-bold">Save</button>
+                <div className="space-y-3 bg-gray-50 p-6 rounded-xl border border-gray-200">
+                  <label className="text-sm font-semibold text-gray-700 flex items-center gap-2"><Phone size={16} /> Contact Number</label>
+                  <div className="flex gap-3">
+                    <input type="text" className="flex-grow p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-navy-900 focus:border-transparent outline-none transition-all" value={settings.contact_number || ''} onChange={e => setSettings({...settings, contact_number: e.target.value})} />
+                    <button onClick={() => handleUpdateSettings('contact_number', settings.contact_number)} className="bg-navy-900 text-white px-6 py-2 rounded-lg font-bold hover:bg-navy-800 transition-all shadow-sm">Save</button>
                   </div>
                 </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-bold text-gray-600 flex items-center gap-2"><Mail size={14} /> Email Address</label>
-                  <div className="flex gap-2">
-                    <input type="email" className="flex-grow p-3 border rounded-lg" value={settings.email_address || ''} onChange={e => setSettings({...settings, email_address: e.target.value})} />
-                    <button onClick={() => handleUpdateSettings('email_address', settings.email_address)} className="bg-navy-900 text-gold-500 px-4 py-2 rounded-lg font-bold">Save</button>
+                <div className="space-y-3 bg-gray-50 p-6 rounded-xl border border-gray-200">
+                  <label className="text-sm font-semibold text-gray-700 flex items-center gap-2"><Mail size={16} /> Email Address</label>
+                  <div className="flex gap-3">
+                    <input type="email" className="flex-grow p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-navy-900 focus:border-transparent outline-none transition-all" value={settings.email_address || ''} onChange={e => setSettings({...settings, email_address: e.target.value})} />
+                    <button onClick={() => handleUpdateSettings('email_address', settings.email_address)} className="bg-navy-900 text-white px-6 py-2 rounded-lg font-bold hover:bg-navy-800 transition-all shadow-sm">Save</button>
                   </div>
                 </div>
-                <div className="space-y-2 md:col-span-2">
-                  <label className="text-sm font-bold text-gray-600 flex items-center gap-2"><MapPin size={14} /> Office Address</label>
-                  <div className="flex gap-2">
-                    <input type="text" className="flex-grow p-3 border rounded-lg" value={settings.office_address || ''} onChange={e => setSettings({...settings, office_address: e.target.value})} />
-                    <button onClick={() => handleUpdateSettings('office_address', settings.office_address)} className="bg-navy-900 text-gold-500 px-4 py-2 rounded-lg font-bold">Save</button>
+                <div className="space-y-3 bg-gray-50 p-6 rounded-xl border border-gray-200">
+                  <label className="text-sm font-semibold text-gray-700 flex items-center gap-2"><MapPin size={16} /> Office Address</label>
+                  <div className="flex gap-3">
+                    <input type="text" className="flex-grow p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-navy-900 focus:border-transparent outline-none transition-all" value={settings.office_address || ''} onChange={e => setSettings({...settings, office_address: e.target.value})} />
+                    <button onClick={() => handleUpdateSettings('office_address', settings.office_address)} className="bg-navy-900 text-white px-6 py-2 rounded-lg font-bold hover:bg-navy-800 transition-all shadow-sm h-fit">Save</button>
                   </div>
                 </div>
-                <div className="space-y-2 md:col-span-2">
-                  <label className="text-sm font-bold text-gray-600 flex items-center gap-2">About Us Content</label>
-                  <textarea className="w-full p-3 border rounded-lg h-32" value={settings.about_us || ''} onChange={e => setSettings({...settings, about_us: e.target.value})} />
-                  <button onClick={() => handleUpdateSettings('about_us', settings.about_us || '')} className="bg-navy-900 text-gold-500 px-8 py-2 rounded-lg font-bold mt-2">Save About Us</button>
+                <div className="space-y-3 md:col-span-2 bg-gray-50 p-6 rounded-xl border border-gray-200">
+                  <label className="text-sm font-semibold text-gray-700 flex items-center gap-2">About Us Content</label>
+                  <div className="flex gap-3 flex-col sm:flex-row">
+                    <textarea className="flex-grow p-3 border border-gray-300 rounded-lg h-32 focus:ring-2 focus:ring-navy-900 focus:border-transparent outline-none transition-all resize-none" value={settings.about_us || ''} onChange={e => setSettings({...settings, about_us: e.target.value})} />
+                    <button onClick={() => handleUpdateSettings('about_us', settings.about_us || '')} className="bg-navy-900 text-white px-6 py-2 rounded-lg font-bold hover:bg-navy-800 transition-all shadow-sm h-fit sm:mt-0 mt-2">Save About Us</button>
+                  </div>
                 </div>
-                <div className="space-y-2 md:col-span-2">
-                  <label className="text-sm font-bold text-gray-600 flex items-center gap-2">Notice Board Text</label>
-                  <textarea className="w-full p-3 border rounded-lg h-24" value={settings.notice_board || ''} onChange={e => setSettings({...settings, notice_board: e.target.value})} />
-                  <button onClick={() => handleUpdateSettings('notice_board', settings.notice_board || '')} className="bg-navy-900 text-gold-500 px-8 py-2 rounded-lg font-bold mt-2">Save Notice Board</button>
+                <div className="space-y-3 md:col-span-2 bg-gray-50 p-6 rounded-xl border border-gray-200">
+                  <label className="text-sm font-semibold text-gray-700 flex items-center gap-2"><Bell size={16} /> Sticky Notice Board</label>
+                  <div className="flex gap-3 flex-col sm:flex-row">
+                    <textarea className="flex-grow p-3 border border-gray-300 rounded-lg h-24 focus:ring-2 focus:ring-navy-900 focus:border-transparent outline-none transition-all resize-none" value={settings.notice_board || ''} onChange={e => setSettings({...settings, notice_board: e.target.value})} placeholder="This notice will always appear at the top of the Notice Board..." />
+                    <button onClick={() => handleUpdateSettings('notice_board', settings.notice_board || '')} className="bg-navy-900 text-white px-6 py-2 rounded-lg font-bold hover:bg-navy-800 transition-all shadow-sm h-fit sm:mt-0 mt-2">Save Notice</button>
+                  </div>
+                </div>
+                <div className="space-y-3 md:col-span-2 bg-gray-50 p-6 rounded-xl border border-gray-200">
+                  <label className="text-sm font-semibold text-gray-700 flex items-center gap-2">Notice Board Speed (seconds)</label>
+                  <div className="flex gap-3 flex-col sm:flex-row">
+                    <input type="number" min="5" max="100" className="flex-grow p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-navy-900 focus:border-transparent outline-none transition-all" value={settings.marquee_speed || 25} onChange={e => setSettings({...settings, marquee_speed: parseInt(e.target.value)})} placeholder="25" />
+                    <button onClick={() => handleUpdateSettings('marquee_speed', settings.marquee_speed || 25)} className="bg-navy-900 text-white px-6 py-2 rounded-lg font-bold hover:bg-navy-800 transition-all shadow-sm h-fit sm:mt-0 mt-2">Save Speed</button>
+                  </div>
                 </div>
               </div>
             </div>
           )}
 
           {activeTab === 'registrations' && (
-            <div className="space-y-4">
-              <div className="flex justify-between items-center mb-4">
-                <h3 className="text-2xl font-bold text-navy-900">Student Registrations</h3>
+            <div className="space-y-6">
+              <div className="flex justify-between items-center mb-6">
+                <h3 className="text-xl font-bold text-navy-900">Student Registrations</h3>
                 {selectedRegistrations.length > 0 && (
-                  <button onClick={() => handleBulkDelete('registrations', selectedRegistrations, setSelectedRegistrations)} className="bg-red-600 text-white px-4 py-2 rounded-lg font-bold hover:bg-red-700 transition-all">
+                  <button onClick={() => handleBulkDelete('registrations', selectedRegistrations, setSelectedRegistrations)} className="bg-red-50 text-red-600 border border-red-200 px-4 py-2 rounded-lg font-bold hover:bg-red-100 transition-all text-sm">
                     Delete Selected ({selectedRegistrations.length})
                   </button>
                 )}
               </div>
-              <div className="overflow-x-auto">
+              <div className="overflow-x-auto bg-white border border-gray-200 rounded-xl shadow-sm">
                 <table className="w-full text-left border-collapse">
                   <thead>
                     <tr className="bg-gray-50 border-b border-gray-200">
-                      <th className="p-4">
-                        <input type="checkbox" checked={selectedRegistrations.length === registrations.length && registrations.length > 0} onChange={e => {
+                      <th className="p-4 w-12">
+                        <input type="checkbox" className="w-4 h-4 rounded border-gray-300 text-navy-900 focus:ring-navy-900 cursor-pointer" checked={selectedRegistrations.length === registrations.length && registrations.length > 0} onChange={e => {
                           if (e.target.checked) setSelectedRegistrations(registrations.map(r => r.id));
                           else setSelectedRegistrations([]);
                         }} />
                       </th>
-                      <th className="p-4 font-bold text-navy-900">Name</th>
-                      <th className="p-4 font-bold text-navy-900">Class</th>
-                      <th className="p-4 font-bold text-navy-900">School</th>
-                      <th className="p-4 font-bold text-navy-900">Mobile</th>
-                      <th className="p-4 font-bold text-navy-900">Date</th>
-                      <th className="p-4 font-bold text-navy-900">Actions</th>
+                      <th className="p-4 font-semibold text-gray-700 text-sm">Name</th>
+                      <th className="p-4 font-semibold text-gray-700 text-sm">Class</th>
+                      <th className="p-4 font-semibold text-gray-700 text-sm">School</th>
+                      <th className="p-4 font-semibold text-gray-700 text-sm">Mobile</th>
+                      <th className="p-4 font-semibold text-gray-700 text-sm">Date</th>
+                      <th className="p-4 font-semibold text-gray-700 text-sm">Actions</th>
                     </tr>
                   </thead>
                   <tbody>
                     {registrations.map(r => (
                       <tr key={r.id} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
                         <td className="p-4">
-                          <input type="checkbox" checked={selectedRegistrations.includes(r.id)} onChange={e => {
+                          <input type="checkbox" className="w-4 h-4 rounded border-gray-300 text-navy-900 focus:ring-navy-900 cursor-pointer" checked={selectedRegistrations.includes(r.id)} onChange={e => {
                             if (e.target.checked) setSelectedRegistrations([...selectedRegistrations, r.id]);
                             else setSelectedRegistrations(selectedRegistrations.filter(id => id !== r.id));
                           }} />
                         </td>
-                        <td className="p-4 text-gray-700">{r.name}</td>
-                        <td className="p-4 text-gray-700">{r.class}</td>
-                        <td className="p-4 text-gray-700">{r.school}</td>
-                        <td className="p-4 text-gray-700">{r.mobile}</td>
-                        <td className="p-4 text-gray-400 text-xs">{new Date(r.created_at).toLocaleDateString()}</td>
+                        <td className="p-4 text-gray-800 font-medium">{r.name}</td>
+                        <td className="p-4 text-gray-600">{r.class}</td>
+                        <td className="p-4 text-gray-600">{r.school}</td>
+                        <td className="p-4 text-gray-600">{r.mobile}</td>
+                        <td className="p-4 text-gray-500 text-sm">{new Date(r.created_at).toLocaleDateString()}</td>
                         <td className="p-4">
-                          <button onClick={() => handleDeleteRegistration(r.id)} className="text-red-500 hover:text-red-700">
+                          <button onClick={() => handleDeleteRegistration(r.id)} className="text-gray-400 hover:text-red-600 transition-colors p-2 rounded-lg hover:bg-red-50">
                             <Trash2 size={18} />
                           </button>
                         </td>
@@ -1162,6 +1329,7 @@ function AdminPanel() {
               </div>
             </div>
           )}
+          </div>
         </div>
       </main>
     </div>
