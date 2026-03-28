@@ -730,7 +730,7 @@ function HomePage() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8 }}
           >
-            <h1 className="text-3xl md:text-7xl font-extrabold mb-4 md:mb-6 tracking-tight leading-tight">
+            <h1 className="text-center text-3xl md:text-7xl font-extrabold mb-4 md:mb-6 tracking-tight leading-tight">
               {settings?.hero_title || "Ugra Sena EDU"}
             </h1>
             <h2 className="text-base md:text-2xl font-semibold mb-6 md:mb-8 text-gold-400 opacity-90 uppercase tracking-[0.15em] md:tracking-[0.4em]">
