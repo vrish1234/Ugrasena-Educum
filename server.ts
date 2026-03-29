@@ -8,6 +8,15 @@ const __dirname = path.dirname(__filename);
 
 async function startServer() {
   const app = express();
+
+  // Redirect logic
+  app.use((req, res, next) => {
+    if (req.headers.host === 'ugrasena-educum.vercel.app') {
+      return res.redirect(301, `https://www.ugrasenaedu.in${req.url}`);
+    }
+    next();
+  });
+
   const PORT = parseInt(process.env.PORT || "3000", 10);
 
   // API routes FIRST
