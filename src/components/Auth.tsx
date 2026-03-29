@@ -27,9 +27,6 @@ export function Auth() {
       if (!data.user) throw new Error('Login failed.');
     } catch (err: any) {
       console.error('Auth error:', err);
-      if (err.message.includes('Refresh Token Not Found') || err.message.includes('Invalid Refresh Token')) {
-        await supabase?.auth.signOut();
-      }
       setError(err.message || 'An error occurred during authentication');
     } finally {
       setLoading(false);
@@ -63,10 +60,12 @@ export function Auth() {
         )}
 
         <div className="space-y-2">
-          <label className="text-xs font-bold text-gold-500 uppercase tracking-[0.2em] ml-1">Email Address</label>
+          <label htmlFor="auth-email" className="text-xs font-bold text-gold-500 uppercase tracking-[0.2em] ml-1">Email Address</label>
           <div className="relative group">
             <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-white/20 group-focus-within:text-gold-500 transition-colors" size={18} />
             <input 
+              id="auth-email"
+              name="auth-email"
               type="email" 
               placeholder="admin@ugrasena.edu" 
               className="w-full pl-12 pr-4 py-4 bg-white/5 border border-white/10 rounded-xl focus:ring-2 focus:ring-gold-500/50 focus:border-gold-500/50 outline-none transition-all text-white placeholder-white/10" 
@@ -78,10 +77,12 @@ export function Auth() {
         </div>
 
         <div className="space-y-2">
-          <label className="text-xs font-bold text-gold-500 uppercase tracking-[0.2em] ml-1">Password</label>
+          <label htmlFor="auth-password" className="text-xs font-bold text-gold-500 uppercase tracking-[0.2em] ml-1">Password</label>
           <div className="relative group">
             <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-white/20 group-focus-within:text-gold-500 transition-colors" size={18} />
             <input 
+              id="auth-password"
+              name="auth-password"
               type={showPassword ? "text" : "password"} 
               placeholder="••••••••" 
               className="w-full pl-12 pr-12 py-4 bg-white/5 border border-white/10 rounded-xl focus:ring-2 focus:ring-gold-500/50 focus:border-gold-500/50 outline-none transition-all text-white placeholder-white/10" 

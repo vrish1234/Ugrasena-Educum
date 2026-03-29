@@ -57,7 +57,11 @@ export function VideoUpload({ onUpload }: VideoUploadProps) {
   return (
     <div className="space-y-4">
       <div className="relative group">
+        <label htmlFor="video-upload" className="sr-only">Upload Video</label>
         <input
+          id="video-upload"
+          name="video-upload"
+          aria-label="Upload Video"
           type="file"
           accept="video/*"
           onChange={uploadVideo}

@@ -61,6 +61,25 @@ function Layout({ children }: { children: React.ReactNode }) {
     };
   }, []);
 
+  useEffect(() => {
+    if (settings.logo_url) {
+      let link = document.querySelector("link[rel~='icon']") as HTMLLinkElement;
+      if (!link) {
+        link = document.createElement('link');
+        link.rel = 'icon';
+        document.head.appendChild(link);
+      }
+      link.href = settings.logo_url;
+
+      // Update meta tags for social sharing
+      const ogImage = document.querySelector("meta[property='og:image']");
+      if (ogImage) ogImage.setAttribute("content", settings.logo_url);
+      
+      const twitterImage = document.querySelector("meta[property='twitter:image']");
+      if (twitterImage) twitterImage.setAttribute("content", settings.logo_url);
+    }
+  }, [settings.logo_url]);
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-transparent text-gold-500">
@@ -186,8 +205,11 @@ function RegistrationForm() {
       <h3 className="text-4xl font-black text-gold-500 mb-8 tracking-tighter uppercase">Scholarship Registration</h3>
       <div className="space-y-5">
         <div className="relative">
+          <label htmlFor="reg-name" className="sr-only">Full Name</label>
           <Users className="absolute left-4 top-1/2 -translate-y-1/2 text-gold-500/50" size={20} />
           <input 
+            id="reg-name"
+            name="name"
             type="text" 
             placeholder="Full Name" 
             className="block w-full p-4 pl-12 bg-white/5 border border-white/10 rounded-2xl focus:ring-2 focus:ring-gold-500/50 outline-none text-white placeholder-white/20 transition-all hover:bg-white/10" 
@@ -197,8 +219,11 @@ function RegistrationForm() {
           />
         </div>
         <div className="relative">
+          <label htmlFor="reg-class" className="sr-only">Class</label>
           <Settings className="absolute left-4 top-1/2 -translate-y-1/2 text-gold-500/50" size={20} />
           <input 
+            id="reg-class"
+            name="class"
             type="text" 
             placeholder="Class" 
             className="block w-full p-4 pl-12 bg-white/5 border border-white/10 rounded-2xl focus:ring-2 focus:ring-gold-500/50 outline-none text-white placeholder-white/20 transition-all hover:bg-white/10" 
@@ -208,8 +233,11 @@ function RegistrationForm() {
           />
         </div>
         <div className="relative">
+          <label htmlFor="reg-school" className="sr-only">School Name</label>
           <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 text-gold-500/50" size={20} />
           <input 
+            id="reg-school"
+            name="school"
             type="text" 
             placeholder="School Name" 
             className="block w-full p-4 pl-12 bg-white/5 border border-white/10 rounded-2xl focus:ring-2 focus:ring-gold-500/50 outline-none text-white placeholder-white/20 transition-all hover:bg-white/10" 
@@ -219,8 +247,11 @@ function RegistrationForm() {
           />
         </div>
         <div className="relative">
+          <label htmlFor="reg-mobile" className="sr-only">Mobile Number</label>
           <Phone className="absolute left-4 top-1/2 -translate-y-1/2 text-gold-500/50" size={20} />
           <input 
+            id="reg-mobile"
+            name="mobile"
             type="tel" 
             placeholder="Mobile Number" 
             className="block w-full p-4 pl-12 bg-white/5 border border-white/10 rounded-2xl focus:ring-2 focus:ring-gold-500/50 outline-none text-white placeholder-white/20 transition-all hover:bg-white/10" 
@@ -499,7 +530,6 @@ function NoticePage() {
 
   const handleDeleteNotification = async (id: string) => {
     if (!supabase || !user) return;
-    if (!window.confirm('Are you sure you want to delete this notification?')) return;
     const { error } = await supabase.from('notifications').delete().eq('id', id);
     if (!error) {
       setNotifications(notifications.filter(n => n.id !== id));
@@ -508,7 +538,6 @@ function NoticePage() {
 
   const handleClearStickyNotice = async () => {
     if (!supabase) return;
-    if (!window.confirm('Are you sure you want to clear the sticky notice?')) return;
     const { error } = await supabase.from('company_info').update({ notice_board: '' }).eq('id', 1);
     if (!error) {
       setStickyNotice(null);
@@ -1105,8 +1134,10 @@ function GalleryPage() {
           
           <form onSubmit={handleAddComment} className="space-y-4">
             <div>
-              <label className="block text-sm font-bold text-white/70 mb-1">Your Name</label>
+              <label htmlFor="comment-name" className="block text-sm font-bold text-white/70 mb-1">Your Name</label>
               <input 
+                id="comment-name"
+                name="comment-name"
                 type="text" 
                 className="w-full p-3 bg-white/5 border border-white/10 rounded-xl focus:ring-2 focus:ring-gold-500 outline-none text-white" 
                 placeholder="Enter your name"
@@ -1116,8 +1147,10 @@ function GalleryPage() {
               />
             </div>
             <div>
-              <label className="block text-sm font-bold text-white/70 mb-1">Comment</label>
+              <label htmlFor="comment-content" className="block text-sm font-bold text-white/70 mb-1">Comment</label>
               <textarea 
+                id="comment-content"
+                name="comment-content"
                 className="w-full p-3 bg-white/5 border border-white/10 rounded-xl h-32 focus:ring-2 focus:ring-gold-500 outline-none text-white" 
                 placeholder="What's on your mind?"
                 value={newComment.content}
@@ -1308,9 +1341,8 @@ function AdminPanel() {
 
   const handleDeleteNotification = async (id: string) => {
     if (!supabase) return;
-    if (!window.confirm('Are you sure you want to delete this notification?')) return;
     const { error } = await supabase.from('notifications').delete().eq('id', id);
-    if (error) alert('Error deleting notification.');
+    if (error) console.error('Error deleting notification:', error);
     else fetchData();
   };
 
@@ -1348,7 +1380,7 @@ function AdminPanel() {
   const handleDeletePost = async (id: string) => {
     if (!supabase) return;
     const { error } = await supabase.from('posts').delete().eq('id', id);
-    if (error) alert('Error deleting post.');
+    if (error) console.error('Error deleting post:', error);
     else fetchData();
   };
 
@@ -1398,7 +1430,7 @@ function AdminPanel() {
   const handleDeleteTeamMember = async (id: string) => {
     if (!supabase) return;
     const { error } = await supabase.from('team').delete().eq('id', id);
-    if (error) alert('Error deleting team member.');
+    if (error) console.error('Error deleting team member:', error);
     else fetchData();
   };
 
@@ -1417,26 +1449,24 @@ function AdminPanel() {
   const handleDeleteRegistration = async (id: string) => {
     if (!supabase) return;
     const { error } = await supabase.from('registrations').delete().eq('id', id);
-    if (error) alert('Error deleting registration.');
+    if (error) console.error('Error deleting registration:', error);
     else fetchData();
   };
 
   const handleDeleteComment = async (id: string) => {
     if (!supabase) return;
     const { error } = await supabase.from('comments').delete().eq('id', id);
-    if (error) alert('Error deleting comment.');
+    if (error) console.error('Error deleting comment:', error);
     else fetchData();
   };
 
   const handleBulkDelete = async (table: string, ids: string[], setSelected: (ids: string[]) => void) => {
     if (!supabase) return;
-    if (confirm(`Are you sure you want to delete ${ids.length} items?`)) {
-      const { error } = await supabase.from(table).delete().in('id', ids);
-      if (error) alert(`Error deleting ${table}: ${error.message}`);
-      else {
-        setSelected([]);
-        fetchData();
-      }
+    const { error } = await supabase.from(table).delete().in('id', ids);
+    if (error) console.error(`Error deleting ${table}:`, error);
+    else {
+      setSelected([]);
+      fetchData();
     }
   };
 
@@ -1582,8 +1612,8 @@ function AdminPanel() {
               <form onSubmit={handleCreatePost} className="glass p-8 rounded-2xl border-white/10 mb-10 shadow-xl">
                 <div className="grid md:grid-cols-2 gap-6 mb-6">
                   <div className="space-y-2">
-                    <label className="text-sm font-bold text-white/70">Title</label>
-                    <input type="text" placeholder="Enter post title" className="w-full p-3 bg-white/5 border border-white/10 rounded-xl focus:ring-2 focus:ring-gold-500 outline-none text-white transition-all" value={newPost.title} onChange={e => setNewPost({...newPost, title: e.target.value})} required />
+                    <label htmlFor="post-title" className="text-sm font-bold text-white/70">Title</label>
+                    <input id="post-title" name="post-title" type="text" placeholder="Enter post title" className="w-full p-3 bg-white/5 border border-white/10 rounded-xl focus:ring-2 focus:ring-gold-500 outline-none text-white transition-all" value={newPost.title} onChange={e => setNewPost({...newPost, title: e.target.value})} required />
                   </div>
                   <div className="space-y-2">
                     <label className="text-sm font-bold text-white/70">Image Upload</label>
@@ -1594,13 +1624,13 @@ function AdminPanel() {
                     <VideoUpload onUpload={(url) => setNewPost({...newPost, video_link: url})} />
                   </div>
                   <div className="space-y-2 md:col-span-2">
-                    <label className="text-sm font-bold text-white/70">External Link (e.g., Google Form, Doc)</label>
-                    <input type="url" placeholder="https://..." className="w-full p-3 bg-white/5 border border-white/10 rounded-xl focus:ring-2 focus:ring-gold-500 outline-none text-white transition-all" value={newPost.video_link} onChange={e => setNewPost({...newPost, video_link: e.target.value})} />
+                    <label htmlFor="post-link" className="text-sm font-bold text-white/70">External Link (e.g., Google Form, Doc)</label>
+                    <input id="post-link" name="post-link" type="url" placeholder="https://..." className="w-full p-3 bg-white/5 border border-white/10 rounded-xl focus:ring-2 focus:ring-gold-500 outline-none text-white transition-all" value={newPost.video_link} onChange={e => setNewPost({...newPost, video_link: e.target.value})} />
                   </div>
                 </div>
                 <div className="space-y-2 mb-6">
-                  <label className="text-sm font-bold text-white/70">Description</label>
-                  <textarea placeholder="Post description..." className="w-full p-3 bg-white/5 border border-white/10 rounded-xl h-32 focus:ring-2 focus:ring-gold-500 outline-none text-white transition-all resize-none" value={newPost.description} onChange={e => setNewPost({...newPost, description: e.target.value})} required />
+                  <label htmlFor="post-description" className="text-sm font-bold text-white/70">Description</label>
+                  <textarea id="post-description" name="post-description" placeholder="Post description..." className="w-full p-3 bg-white/5 border border-white/10 rounded-xl h-32 focus:ring-2 focus:ring-gold-500 outline-none text-white transition-all resize-none" value={newPost.description} onChange={e => setNewPost({...newPost, description: e.target.value})} required />
                 </div>
                 <div className="flex gap-3">
                   <button type="submit" className="glass-gold text-gold-500 px-8 py-3 rounded-xl font-bold hover:bg-gold-500 hover:text-navy-900 transition-all shadow-lg">
@@ -1618,7 +1648,7 @@ function AdminPanel() {
                 {posts.map(p => (
                   <div key={p.id} className="glass rounded-2xl overflow-hidden border-white/10 hover:shadow-2xl transition-all relative group flex flex-col">
                     <div className="absolute top-3 left-3 z-10">
-                      <input type="checkbox" className="w-4 h-4 rounded border-white/20 bg-white/5 text-gold-500 focus:ring-gold-500 cursor-pointer" checked={selectedPosts.includes(p.id)} onChange={e => {
+                      <input id={`select-post-${p.id}`} name={`select-post-${p.id}`} aria-label={`Select post ${p.title}`} type="checkbox" className="w-4 h-4 rounded border-white/20 bg-white/5 text-gold-500 focus:ring-gold-500 cursor-pointer" checked={selectedPosts.includes(p.id)} onChange={e => {
                         if (e.target.checked) setSelectedPosts([...selectedPosts, p.id]);
                         else setSelectedPosts(selectedPosts.filter(id => id !== p.id));
                       }} />
@@ -1669,8 +1699,8 @@ function AdminPanel() {
                 </div>
                 <form onSubmit={handleCreateNotification} className="glass p-8 rounded-2xl border-white/10 mb-8 shadow-xl">
                   <div className="space-y-2 mb-6">
-                    <label className="text-sm font-bold text-white/70">Message</label>
-                    <textarea placeholder="Type your notification message here..." className="w-full p-3 bg-white/5 border border-white/10 rounded-xl h-24 focus:ring-2 focus:ring-gold-500 outline-none text-white transition-all resize-none" value={newNotification} onChange={e => setNewNotification(e.target.value)} required />
+                    <label htmlFor="notification-message" className="text-sm font-bold text-white/70">Message</label>
+                    <textarea id="notification-message" name="notification-message" placeholder="Type your notification message here..." className="w-full p-3 bg-white/5 border border-white/10 rounded-xl h-24 focus:ring-2 focus:ring-gold-500 outline-none text-white transition-all resize-none" value={newNotification} onChange={e => setNewNotification(e.target.value)} required />
                   </div>
                   <button type="submit" className="glass-gold text-gold-500 px-8 py-3 rounded-xl font-bold hover:bg-gold-500 hover:text-navy-900 transition-all shadow-lg">
                     {editingNotification ? 'Update Notification' : 'Send Notification'}
@@ -1685,7 +1715,7 @@ function AdminPanel() {
                 <div className="space-y-4">
                   {notifications.map(n => (
                     <div key={n.id} className="flex items-start gap-4 p-6 glass rounded-2xl border-white/10 hover:shadow-xl transition-all">
-                      <input type="checkbox" className="mt-1 w-4 h-4 rounded border-white/20 bg-white/5 text-gold-500 focus:ring-gold-500 cursor-pointer" checked={selectedNotifications.includes(n.id)} onChange={e => {
+                      <input id={`select-notification-${n.id}`} name={`select-notification-${n.id}`} aria-label={`Select notification ${n.id}`} type="checkbox" className="mt-1 w-4 h-4 rounded border-white/20 bg-white/5 text-gold-500 focus:ring-gold-500 cursor-pointer" checked={selectedNotifications.includes(n.id)} onChange={e => {
                         if (e.target.checked) setSelectedNotifications([...selectedNotifications, n.id]);
                         else setSelectedNotifications(selectedNotifications.filter(id => id !== n.id));
                       }} />
@@ -1721,24 +1751,24 @@ function AdminPanel() {
               <form onSubmit={handleCreateTeamMember} className="glass p-8 rounded-2xl border-white/10 mb-10 shadow-xl">
                 <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
                   <div className="space-y-2">
-                    <label className="text-sm font-bold text-white/70">Name</label>
-                    <input type="text" placeholder="John Doe" className="w-full p-3 bg-white/5 border border-white/10 rounded-xl focus:ring-2 focus:ring-gold-500 outline-none text-white transition-all" value={newTeamMember.name} onChange={e => setNewTeamMember({...newTeamMember, name: e.target.value})} required />
+                    <label htmlFor="team-name" className="text-sm font-bold text-white/70">Name</label>
+                    <input id="team-name" name="team-name" type="text" placeholder="John Doe" className="w-full p-3 bg-white/5 border border-white/10 rounded-xl focus:ring-2 focus:ring-gold-500 outline-none text-white transition-all" value={newTeamMember.name} onChange={e => setNewTeamMember({...newTeamMember, name: e.target.value})} required />
                   </div>
                   <div className="space-y-2">
-                    <label className="text-sm font-bold text-white/70">Role</label>
-                    <input type="text" placeholder="Director" className="w-full p-3 bg-white/5 border border-white/10 rounded-xl focus:ring-2 focus:ring-gold-500 outline-none text-white transition-all" value={newTeamMember.role} onChange={e => setNewTeamMember({...newTeamMember, role: e.target.value})} required />
+                    <label htmlFor="team-role" className="text-sm font-bold text-white/70">Role</label>
+                    <input id="team-role" name="team-role" type="text" placeholder="Director" className="w-full p-3 bg-white/5 border border-white/10 rounded-xl focus:ring-2 focus:ring-gold-500 outline-none text-white transition-all" value={newTeamMember.role} onChange={e => setNewTeamMember({...newTeamMember, role: e.target.value})} required />
                   </div>
                   <div className="space-y-2">
-                    <label className="text-sm font-bold text-white/70">Email Address</label>
-                    <input type="email" placeholder="john@example.com" className="w-full p-3 bg-white/5 border border-white/10 rounded-xl focus:ring-2 focus:ring-gold-500 outline-none text-white transition-all" value={newTeamMember.email} onChange={e => setNewTeamMember({...newTeamMember, email: e.target.value})} />
+                    <label htmlFor="team-email" className="text-sm font-bold text-white/70">Email Address</label>
+                    <input id="team-email" name="team-email" type="email" placeholder="john@example.com" className="w-full p-3 bg-white/5 border border-white/10 rounded-xl focus:ring-2 focus:ring-gold-500 outline-none text-white transition-all" value={newTeamMember.email} onChange={e => setNewTeamMember({...newTeamMember, email: e.target.value})} />
                   </div>
                   <div className="space-y-2">
-                    <label className="text-sm font-bold text-white/70">Contact Number</label>
-                    <input type="text" placeholder="+91 1234567890" className="w-full p-3 bg-white/5 border border-white/10 rounded-xl focus:ring-2 focus:ring-gold-500 outline-none text-white transition-all" value={newTeamMember.contact_number} onChange={e => setNewTeamMember({...newTeamMember, contact_number: e.target.value})} />
+                    <label htmlFor="team-contact" className="text-sm font-bold text-white/70">Contact Number</label>
+                    <input id="team-contact" name="team-contact" type="text" placeholder="+91 1234567890" className="w-full p-3 bg-white/5 border border-white/10 rounded-xl focus:ring-2 focus:ring-gold-500 outline-none text-white transition-all" value={newTeamMember.contact_number} onChange={e => setNewTeamMember({...newTeamMember, contact_number: e.target.value})} />
                   </div>
                   <div className="space-y-2">
-                    <label className="text-sm font-bold text-white/70">Order Index</label>
-                    <input type="number" placeholder="1" className="w-full p-3 bg-white/5 border border-white/10 rounded-xl focus:ring-2 focus:ring-gold-500 outline-none text-white transition-all" value={newTeamMember.order_index} onChange={e => setNewTeamMember({...newTeamMember, order_index: parseInt(e.target.value)})} required />
+                    <label htmlFor="team-order" className="text-sm font-bold text-white/70">Order Index</label>
+                    <input id="team-order" name="team-order" type="number" placeholder="1" className="w-full p-3 bg-white/5 border border-white/10 rounded-xl focus:ring-2 focus:ring-gold-500 outline-none text-white transition-all" value={newTeamMember.order_index} onChange={e => setNewTeamMember({...newTeamMember, order_index: parseInt(e.target.value)})} required />
                   </div>
                 </div>
                 <div className="flex gap-3">
@@ -1757,7 +1787,7 @@ function AdminPanel() {
                 {team.map(m => (
                   <div key={m.id} className="glass rounded-2xl p-6 flex gap-4 border-white/10 hover:shadow-2xl transition-all relative group">
                     <div className="absolute top-3 left-3 z-10">
-                      <input type="checkbox" className="w-4 h-4 rounded border-white/20 bg-white/5 text-gold-500 focus:ring-gold-500 cursor-pointer" checked={selectedTeamMembers.includes(m.id)} onChange={e => {
+                      <input id={`select-team-${m.id}`} name={`select-team-${m.id}`} aria-label={`Select team member ${m.name}`} type="checkbox" className="w-4 h-4 rounded border-white/20 bg-white/5 text-gold-500 focus:ring-gold-500 cursor-pointer" checked={selectedTeamMembers.includes(m.id)} onChange={e => {
                         if (e.target.checked) setSelectedTeamMembers([...selectedTeamMembers, m.id]);
                         else setSelectedTeamMembers(selectedTeamMembers.filter(id => id !== m.id));
                       }} />
@@ -1796,30 +1826,30 @@ function AdminPanel() {
                   {settings.logo_url && <img src={settings.logo_url} alt="Logo" className="h-16 mt-4 rounded-xl border border-white/10 glass p-2" />}
                 </div>
                 <div className="space-y-3 glass p-6 rounded-2xl border-white/10 shadow-xl">
-                  <label className="text-sm font-bold text-white/70 flex items-center gap-2"><Phone size={16} /> Contact Number</label>
+                  <label htmlFor="settings-contact" className="text-sm font-bold text-white/70 flex items-center gap-2"><Phone size={16} /> Contact Number</label>
                   <div className="flex gap-3">
-                    <input type="text" className="flex-grow p-3 bg-white/5 border border-white/10 rounded-xl focus:ring-2 focus:ring-gold-500 outline-none text-white transition-all" value={settings.contact_number || ''} onChange={e => setSettings({...settings, contact_number: e.target.value})} />
+                    <input id="settings-contact" name="settings-contact" type="text" className="flex-grow p-3 bg-white/5 border border-white/10 rounded-xl focus:ring-2 focus:ring-gold-500 outline-none text-white transition-all" value={settings.contact_number || ''} onChange={e => setSettings({...settings, contact_number: e.target.value})} />
                     <button onClick={() => handleUpdateSettings('contact_number', settings.contact_number)} className="glass-gold text-gold-500 px-6 py-2 rounded-xl font-bold hover:bg-gold-500 hover:text-navy-900 transition-all shadow-lg">Save</button>
                   </div>
                 </div>
                 <div className="space-y-3 glass p-6 rounded-2xl border-white/10 shadow-xl">
-                  <label className="text-sm font-bold text-white/70 flex items-center gap-2"><Mail size={16} /> Email Address</label>
+                  <label htmlFor="settings-email" className="text-sm font-bold text-white/70 flex items-center gap-2"><Mail size={16} /> Email Address</label>
                   <div className="flex gap-3">
-                    <input type="email" className="flex-grow p-3 bg-white/5 border border-white/10 rounded-xl focus:ring-2 focus:ring-gold-500 outline-none text-white transition-all" value={settings.email_address || ''} onChange={e => setSettings({...settings, email_address: e.target.value})} />
+                    <input id="settings-email" name="settings-email" type="email" className="flex-grow p-3 bg-white/5 border border-white/10 rounded-xl focus:ring-2 focus:ring-gold-500 outline-none text-white transition-all" value={settings.email_address || ''} onChange={e => setSettings({...settings, email_address: e.target.value})} />
                     <button onClick={() => handleUpdateSettings('email_address', settings.email_address)} className="glass-gold text-gold-500 px-6 py-2 rounded-xl font-bold hover:bg-gold-500 hover:text-navy-900 transition-all shadow-lg">Save</button>
                   </div>
                 </div>
                 <div className="space-y-3 glass p-6 rounded-2xl border-white/10 shadow-xl">
-                  <label className="text-sm font-bold text-white/70 flex items-center gap-2"><MapPin size={16} /> Office Address</label>
+                  <label htmlFor="settings-address" className="text-sm font-bold text-white/70 flex items-center gap-2"><MapPin size={16} /> Office Address</label>
                   <div className="flex gap-3">
-                    <input type="text" className="flex-grow p-3 bg-white/5 border border-white/10 rounded-xl focus:ring-2 focus:ring-gold-500 outline-none text-white transition-all" value={settings.office_address || ''} onChange={e => setSettings({...settings, office_address: e.target.value})} />
+                    <input id="settings-address" name="settings-address" type="text" className="flex-grow p-3 bg-white/5 border border-white/10 rounded-xl focus:ring-2 focus:ring-gold-500 outline-none text-white transition-all" value={settings.office_address || ''} onChange={e => setSettings({...settings, office_address: e.target.value})} />
                     <button onClick={() => handleUpdateSettings('office_address', settings.office_address)} className="glass-gold text-gold-500 px-6 py-2 rounded-xl font-bold hover:bg-gold-500 hover:text-navy-900 transition-all shadow-lg h-fit">Save</button>
                   </div>
                 </div>
                 <div className="space-y-3 md:col-span-2 glass p-6 rounded-2xl border-white/10 shadow-xl">
-                  <label className="text-sm font-bold text-white/70 flex items-center gap-2">About Us Content</label>
+                  <label htmlFor="settings-about" className="text-sm font-bold text-white/70 flex items-center gap-2">About Us Content</label>
                   <div className="flex gap-3 flex-col sm:flex-row">
-                    <textarea className="flex-grow p-3 bg-white/5 border border-white/10 rounded-xl h-32 focus:ring-2 focus:ring-gold-500 outline-none text-white transition-all resize-none" value={settings.about_us || ''} onChange={e => setSettings({...settings, about_us: e.target.value})} />
+                    <textarea id="settings-about" name="settings-about" className="flex-grow p-3 bg-white/5 border border-white/10 rounded-xl h-32 focus:ring-2 focus:ring-gold-500 outline-none text-white transition-all resize-none" value={settings.about_us || ''} onChange={e => setSettings({...settings, about_us: e.target.value})} />
                     <button onClick={() => handleUpdateSettings('about_us', settings.about_us || '')} className="glass-gold text-gold-500 px-6 py-2 rounded-xl font-bold hover:bg-gold-500 hover:text-navy-900 transition-all shadow-lg h-fit sm:mt-0 mt-2">Save About Us</button>
                   </div>
                 </div>
@@ -1828,18 +1858,18 @@ function AdminPanel() {
                   <h4 className="text-lg font-bold text-gold-500 mb-6 flex items-center gap-2"><Image size={20} /> Hero Section Customization</h4>
                   <div className="grid md:grid-cols-2 gap-6">
                     <div className="space-y-3 glass p-6 rounded-2xl border-white/10 shadow-xl">
-                      <label className="text-sm font-bold text-white/70">Hero Main Title</label>
-                      <input type="text" className="w-full p-3 bg-white/5 border border-white/10 rounded-xl focus:ring-2 focus:ring-gold-500 outline-none text-white transition-all" value={settings.hero_title || ''} onChange={e => setSettings({...settings, hero_title: e.target.value})} placeholder="e.g. Ugra Sena EDU" />
+                      <label htmlFor="settings-hero-title" className="text-sm font-bold text-white/70">Hero Main Title</label>
+                      <input id="settings-hero-title" name="settings-hero-title" type="text" className="w-full p-3 bg-white/5 border border-white/10 rounded-xl focus:ring-2 focus:ring-gold-500 outline-none text-white transition-all" value={settings.hero_title || ''} onChange={e => setSettings({...settings, hero_title: e.target.value})} placeholder="e.g. Ugra Sena EDU" />
                       <button onClick={() => handleUpdateSettings('hero_title', settings.hero_title || '')} className="glass-gold text-gold-500 px-6 py-2 rounded-xl font-bold hover:bg-gold-500 hover:text-navy-900 transition-all text-sm mt-2">Update Title</button>
                     </div>
                     <div className="space-y-3 glass p-6 rounded-2xl border-white/10 shadow-xl">
-                      <label className="text-sm font-bold text-white/70">Hero Subtitle</label>
-                      <input type="text" className="w-full p-3 bg-white/5 border border-white/10 rounded-xl focus:ring-2 focus:ring-gold-500 outline-none text-white transition-all" value={settings.hero_subtitle || ''} onChange={e => setSettings({...settings, hero_subtitle: e.target.value})} placeholder="e.g. UGRASENA EDUCUM PRIVATE LIMITED" />
+                      <label htmlFor="settings-hero-subtitle" className="text-sm font-bold text-white/70">Hero Subtitle</label>
+                      <input id="settings-hero-subtitle" name="settings-hero-subtitle" type="text" className="w-full p-3 bg-white/5 border border-white/10 rounded-xl focus:ring-2 focus:ring-gold-500 outline-none text-white transition-all" value={settings.hero_subtitle || ''} onChange={e => setSettings({...settings, hero_subtitle: e.target.value})} placeholder="e.g. UGRASENA EDUCUM PRIVATE LIMITED" />
                       <button onClick={() => handleUpdateSettings('hero_subtitle', settings.hero_subtitle || '')} className="glass-gold text-gold-500 px-6 py-2 rounded-xl font-bold hover:bg-gold-500 hover:text-navy-900 transition-all text-sm mt-2">Update Subtitle</button>
                     </div>
                     <div className="space-y-3 glass p-6 rounded-2xl border-white/10 shadow-xl">
-                      <label className="text-sm font-bold text-white/70">Hero Tagline</label>
-                      <input type="text" className="w-full p-3 bg-white/5 border border-white/10 rounded-xl focus:ring-2 focus:ring-gold-500 outline-none text-white transition-all" value={settings.hero_tagline || ''} onChange={e => setSettings({...settings, hero_tagline: e.target.value})} placeholder='e.g. "Empowering Minds, Shaping Futures"' />
+                      <label htmlFor="settings-hero-tagline" className="text-sm font-bold text-white/70">Hero Tagline</label>
+                      <input id="settings-hero-tagline" name="settings-hero-tagline" type="text" className="w-full p-3 bg-white/5 border border-white/10 rounded-xl focus:ring-2 focus:ring-gold-500 outline-none text-white transition-all" value={settings.hero_tagline || ''} onChange={e => setSettings({...settings, hero_tagline: e.target.value})} placeholder='e.g. "Empowering Minds, Shaping Futures"' />
                       <button onClick={() => handleUpdateSettings('hero_tagline', settings.hero_tagline || '')} className="glass-gold text-gold-500 px-6 py-2 rounded-xl font-bold hover:bg-gold-500 hover:text-navy-900 transition-all text-sm mt-2">Update Tagline</button>
                     </div>
                     <div className="space-y-3 glass p-6 rounded-2xl border-white/10 shadow-xl">
@@ -1855,16 +1885,16 @@ function AdminPanel() {
                   </div>
                 </div>
                 <div className="space-y-3 md:col-span-2 glass p-6 rounded-2xl border-white/10 shadow-xl">
-                  <label className="text-sm font-bold text-white/70 flex items-center gap-2"><Bell size={16} /> Sticky Notice Board</label>
+                  <label htmlFor="settings-notice" className="text-sm font-bold text-white/70 flex items-center gap-2"><Bell size={16} /> Sticky Notice Board</label>
                   <div className="flex gap-3 flex-col sm:flex-row">
-                    <textarea className="flex-grow p-3 bg-white/5 border border-white/10 rounded-xl h-24 focus:ring-2 focus:ring-gold-500 outline-none text-white transition-all resize-none" value={settings.notice_board || ''} onChange={e => setSettings({...settings, notice_board: e.target.value})} placeholder="This notice will always appear at the top of the Notice Board..." />
+                    <textarea id="settings-notice" name="settings-notice" className="flex-grow p-3 bg-white/5 border border-white/10 rounded-xl h-24 focus:ring-2 focus:ring-gold-500 outline-none text-white transition-all resize-none" value={settings.notice_board || ''} onChange={e => setSettings({...settings, notice_board: e.target.value})} placeholder="This notice will always appear at the top of the Notice Board..." />
                     <button onClick={() => handleUpdateSettings('notice_board', settings.notice_board || '')} className="glass-gold text-gold-500 px-6 py-2 rounded-xl font-bold hover:bg-gold-500 hover:text-navy-900 transition-all shadow-lg h-fit sm:mt-0 mt-2">Save Notice</button>
                   </div>
                 </div>
                 <div className="space-y-3 md:col-span-2 glass p-6 rounded-2xl border-white/10 shadow-xl">
-                  <label className="text-sm font-bold text-white/70 flex items-center gap-2">Notice Board Speed (seconds)</label>
+                  <label htmlFor="settings-speed" className="text-sm font-bold text-white/70 flex items-center gap-2">Notice Board Speed (seconds)</label>
                   <div className="flex gap-3 flex-col sm:flex-row">
-                    <input type="number" min="5" max="100" className="flex-grow p-3 bg-white/5 border border-white/10 rounded-xl focus:ring-2 focus:ring-gold-500 outline-none text-white transition-all" value={settings.marquee_speed || 25} onChange={e => setSettings({...settings, marquee_speed: parseInt(e.target.value)})} placeholder="25" />
+                    <input id="settings-speed" name="settings-speed" type="number" min="5" max="100" className="flex-grow p-3 bg-white/5 border border-white/10 rounded-xl focus:ring-2 focus:ring-gold-500 outline-none text-white transition-all" value={settings.marquee_speed || 25} onChange={e => setSettings({...settings, marquee_speed: parseInt(e.target.value)})} placeholder="25" />
                     <button onClick={() => handleUpdateSettings('marquee_speed', settings.marquee_speed || 25)} className="glass-gold text-gold-500 px-6 py-2 rounded-xl font-bold hover:bg-gold-500 hover:text-navy-900 transition-all shadow-lg h-fit sm:mt-0 mt-2">Save Speed</button>
                   </div>
                 </div>
@@ -1887,7 +1917,7 @@ function AdminPanel() {
                   const post = posts.find(p => p.id === c.post_id);
                   return (
                     <div key={c.id} className="glass border-white/10 rounded-2xl p-5 flex gap-4 hover:shadow-2xl transition-all">
-                      <input type="checkbox" className="mt-1 w-4 h-4 rounded border-white/20 bg-white/5 text-gold-500 focus:ring-gold-500 cursor-pointer" checked={selectedComments.includes(c.id)} onChange={e => {
+                      <input id={`select-comment-${c.id}`} name={`select-comment-${c.id}`} aria-label={`Select comment by ${c.user_name}`} type="checkbox" className="mt-1 w-4 h-4 rounded border-white/20 bg-white/5 text-gold-500 focus:ring-gold-500 cursor-pointer" checked={selectedComments.includes(c.id)} onChange={e => {
                         if (e.target.checked) setSelectedComments([...selectedComments, c.id]);
                         else setSelectedComments(selectedComments.filter(id => id !== c.id));
                       }} />
@@ -1936,7 +1966,7 @@ function AdminPanel() {
                   <thead>
                     <tr className="bg-white/5 border-b border-white/10">
                       <th className="p-6 w-12 text-gold-500">
-                        <input type="checkbox" className="w-5 h-5 rounded border-white/20 bg-white/5 text-gold-500 focus:ring-gold-500 cursor-pointer" checked={selectedRegistrations.length === registrations.length && registrations.length > 0} onChange={e => {
+                        <input id="select-all-registrations" name="select-all-registrations" aria-label="Select all registrations" type="checkbox" className="w-5 h-5 rounded border-white/20 bg-white/5 text-gold-500 focus:ring-gold-500 cursor-pointer" checked={selectedRegistrations.length === registrations.length && registrations.length > 0} onChange={e => {
                           if (e.target.checked) setSelectedRegistrations(registrations.map(r => r.id));
                           else setSelectedRegistrations([]);
                         }} />
@@ -1953,7 +1983,7 @@ function AdminPanel() {
                     {registrations.map(r => (
                       <tr key={r.id} className="border-b border-white/5 hover:bg-white/5 transition-all group">
                         <td className="p-6">
-                          <input type="checkbox" className="w-5 h-5 rounded border-white/20 bg-white/5 text-gold-500 focus:ring-gold-500 cursor-pointer" checked={selectedRegistrations.includes(r.id)} onChange={e => {
+                          <input id={`select-registration-${r.id}`} name={`select-registration-${r.id}`} aria-label={`Select registration for ${r.name}`} type="checkbox" className="w-5 h-5 rounded border-white/20 bg-white/5 text-gold-500 focus:ring-gold-500 cursor-pointer" checked={selectedRegistrations.includes(r.id)} onChange={e => {
                             if (e.target.checked) setSelectedRegistrations([...selectedRegistrations, r.id]);
                             else setSelectedRegistrations(selectedRegistrations.filter(id => id !== r.id));
                           }} />

@@ -57,7 +57,11 @@ export function ImageUpload({ onUpload }: ImageUploadProps) {
   return (
     <div className="space-y-4">
       <div className="relative group">
+        <label htmlFor="image-upload" className="sr-only">Upload Image</label>
         <input
+          id="image-upload"
+          name="image-upload"
+          aria-label="Upload Image"
           type="file"
           accept="image/*"
           onChange={uploadImage}
