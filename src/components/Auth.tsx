@@ -27,6 +27,9 @@ export function Auth() {
       if (!data.user) throw new Error('Login failed.');
     } catch (err: any) {
       console.error('Auth error:', err);
+      if (err.message.includes('Refresh Token Not Found') || err.message.includes('Invalid Refresh Token')) {
+        await supabase?.auth.signOut();
+      }
       setError(err.message || 'An error occurred during authentication');
     } finally {
       setLoading(false);
