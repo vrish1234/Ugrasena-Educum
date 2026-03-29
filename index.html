@@ -9,21 +9,32 @@
     <meta name="author" content="Ugrasena Educum Private Limited" />
     <meta name="google-site-verification" content="AOMG0g74hxX3ys7x9uc9WTLrmdFJrwwgA-6UaUVtvJU" />
     <link rel="canonical" href="https://www.ugrasenaedu.in" />
-    <link rel="icon" href="/favicon.ico" />
+    
+    <script>
+      (function() {
+        var link = document.querySelector("link[rel*='icon']");
+        if (!link) {
+          link = document.createElement('link');
+          link.rel = 'icon';
+          document.head.appendChild(link);
+        }
+        link.href = 'https://www.ugrasenaedu.in/logo.png?v=' + new Date().getTime();
+      })();
+    </script>
     
     <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website" />
     <meta property="og:url" content="https://www.ugrasenaedu.in" />
     <meta property="og:title" content="Ugra Sena EDU | Official Portal" />
     <meta property="og:description" content="Official portal for Ugra Sena EDU (UGRASENA EDUCUM PRIVATE LIMITED). Offering scholarship registration, educational resources, and academic guidance for students." />
-    <meta property="og:image" content="https://picsum.photos/seed/education/1200/630" />
+    <meta property="og:image" content="https://www.ugrasenaedu.in/logo.png" />
 
     <!-- Twitter -->
     <meta property="twitter:card" content="summary_large_image" />
     <meta property="twitter:url" content="https://www.ugrasenaedu.in" />
     <meta property="twitter:title" content="Ugra Sena EDU | Official Portal" />
     <meta property="twitter:description" content="Official portal for Ugra Sena EDU (UGRASENA EDUCUM PRIVATE LIMITED). Offering scholarship registration, educational resources, and academic guidance for students." />
-    <meta property="twitter:image" content="https://picsum.photos/seed/education/1200/630" />
+    <meta property="twitter:image" content="https://www.ugrasenaedu.in/logo.png" />
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
